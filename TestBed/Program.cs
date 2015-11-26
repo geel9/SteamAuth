@@ -12,11 +12,6 @@ namespace TestBed
         static void Main(string[] args)
         {
             SteamGuardAccount acc = new SteamGuardAccount();
-            acc.SharedSecret = "gMTEuBXg2CWd8YN5N1CvOWlp64A=";
-
-            string code = acc.GenerateSteamGuardCode();
-
-            Console.WriteLine(code);
             Console.ReadLine();
         }
     }
