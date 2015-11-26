@@ -35,6 +35,9 @@ namespace SteamAuth
         [JsonProperty("secret_1")]
         public string Secret1 { get; set; }
 
+        [JsonProperty("status")]
+        public int Status { get; set; }
+
         [JsonProperty("device_id")]
         public string DeviceID { get; set; }
 
@@ -44,7 +47,7 @@ namespace SteamAuth
 
         public string GenerateSteamGuardCode()
         {
-            return GenerateSteamGuardCodeForTime(TimeCorrector.GetSteamTime());
+            return GenerateSteamGuardCodeForTime(TimeAligner.GetSteamTime());
         }
 
         public string GenerateSteamGuardCodeForTime(long time)
@@ -86,8 +89,6 @@ namespace SteamAuth
             }
             return Encoding.UTF8.GetString(codeArray);
         }
-
-
 
         private string _generateConfirmationHashForTime(long time, string tag) {
             byte[] decode = Convert.FromBase64String(this.IdentitySecret);

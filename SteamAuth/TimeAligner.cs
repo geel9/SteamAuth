@@ -7,16 +7,16 @@ namespace SteamAuth
     /// Class to help align system time with the Steam server time. Not super advanced; probably not taking some things into account that it should.
     /// Necessary to generate up-to-date codes. In general, this will have an error of less than a second, assuming Steam is operational.
     /// </summary>
-    public class TimeCorrector
+    public class TimeAligner
     {
         private static bool _aligned = false;
         private static int _timeDifference = 0;
 
         public static long GetSteamTime()
         {
-            if (!TimeCorrector._aligned)
+            if (!TimeAligner._aligned)
             {
-                TimeCorrector.AlignTime();
+                TimeAligner.AlignTime();
             }
             return Util.GetSystemUnixTime() + _timeDifference;
         }
@@ -30,8 +30,8 @@ namespace SteamAuth
                 {
                     string response = client.UploadString(APIEndpoints.TWO_FACTOR_TIME_QUERY, "steamid=0");
                     TimeQuery query = JsonConvert.DeserializeObject<TimeQuery>(response);
-                    TimeCorrector._timeDifference = (int)(query.Response.ServerTime - currentTime);
-                    TimeCorrector._aligned = true;
+                    TimeAligner._timeDifference = (int)(query.Response.ServerTime - currentTime);
+                    TimeAligner._aligned = true;
                 }
                 catch (WebException e)
                 {
