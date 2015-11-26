@@ -17,5 +17,7 @@ namespace SteamAuth
         public string WebCookie { get; set; }
 
         public string OAuthToken { get; set; }
+
+        public ulong SteamID { get; set; }
     }
 }
