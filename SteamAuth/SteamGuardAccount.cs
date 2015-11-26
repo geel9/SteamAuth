@@ -9,7 +9,7 @@ namespace SteamAuth
 {
     public class SteamGuardAccount
     {
-        private static byte[] s_rgchSteamguardCodeChars = new byte[] { 50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89 };
+        private static byte[] steamGuardCodeTranslations = new byte[] { 50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89 };
 
         public string SharedSecret { get; set; }
 
@@ -38,48 +38,44 @@ namespace SteamAuth
             return GenerateSteamGuardCodeForTime((long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds);
         }
 
-        public string GenerateSteamGuardCodeForTime(long n)
+        public string GenerateSteamGuardCodeForTime(long time)
         {
-            //Convert the unsigned byte array returned from Convert.FromBase64String to a signed byte array.
-            //byte[] signedSharedSecretArray = Array.ConvertAll(Convert.FromBase64String(this.SharedSecret), b => unchecked((byte)b));
-
-            byte[] sharedSecretArray = Convert.FromBase64String(this.SharedSecret);
-
-            n /= 30L;
-            byte[] array = new byte[8];
-            int n2 = 8;
-            while (true)
+            if (this.SharedSecret == null || this.SharedSecret.Length == 0)
             {
-                int n3 = n2 - 1;
-                if (n2 <= 0)
-                {
-                    break;
-                }
-                array[n3] = (byte)n;
-                n >>= 8;
-                n2 = n3;
+                return "";
             }
 
-            HMACSHA1 hmacsha1 = new HMACSHA1();
-            hmacsha1.Key = sharedSecretArray;
-            byte[] final = hmacsha1.ComputeHash(array);
-            byte[] array2 = new byte[5];
+            byte[] sharedSecretArray = Convert.FromBase64String(this.SharedSecret);
+            byte[] timeArray = new byte[8];
+
+            time /= 30L;
+
+            for (int i = 8; i > 0; i--)
+            {
+                timeArray[i - 1] = (byte)time;
+                time >>= 8;
+            }
+
+            HMACSHA1 hmacGenerator = new HMACSHA1();
+            hmacGenerator.Key = sharedSecretArray;
+            byte[] hashedData = hmacGenerator.ComputeHash(timeArray);
+            byte[] codeArray = new byte[5];
             try
             {
-                byte b = (byte)(final[19] & 0xF);
-                int n4 = (final[b] & 0x7F) << 24 | (final[b + 1] & 0xFF) << 16 | (final[b + 2] & 0xFF) << 8 | (final[b + 3] & 0xFF);
+                byte b = (byte)(hashedData[19] & 0xF);
+                int codePoint = (hashedData[b] & 0x7F) << 24 | (hashedData[b + 1] & 0xFF) << 16 | (hashedData[b + 2] & 0xFF) << 8 | (hashedData[b + 3] & 0xFF);
 
                 for (int i = 0; i < 5; ++i)
                 {
-                    array2[i] = s_rgchSteamguardCodeChars[n4 % s_rgchSteamguardCodeChars.Length];
-                    n4 /= s_rgchSteamguardCodeChars.Length;
+                    codeArray[i] = steamGuardCodeTranslations[codePoint % steamGuardCodeTranslations.Length];
+                    codePoint /= steamGuardCodeTranslations.Length;
                 }
             }
             catch (Exception e)
             {
-                return null; //Change later, catch-alls are badde
+                return null; //Change later, catch-alls are bad!
             }
-            return System.Text.Encoding.UTF8.GetString(array2);
+            return Encoding.UTF8.GetString(codeArray);
         }
     }
 }
