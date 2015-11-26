@@ -139,11 +139,12 @@ namespace SteamAuth
                 SessionData session = new SessionData();
                 session.OAuthToken = oAuthData.OAuthToken;
                 session.SteamID = oAuthData.SteamID;
-                session.SteamLogin = oAuthData.SteamLogin;
-                session.SteamLoginSecure = oAuthData.SteamLoginSecure;
+                session.SteamLogin = session.SteamID + "%7C%7C" + oAuthData.SteamLogin;
+                session.SteamLoginSecure = session.SteamID + "%7C%7C" + oAuthData.SteamLoginSecure;
                 session.WebCookie = oAuthData.Webcookie;
                 session.SessionID = readableCookies["sessionid"].Value;
                 this.Session = session;
+                this.LoggedIn = true;
                 return LoginResult.LoginOkay;
             }
 
