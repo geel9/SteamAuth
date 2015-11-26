@@ -45,11 +45,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="APIEndpoints.cs" />
+    <Compile Include="AuthenticatorLinker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SessionData.cs" />
     <Compile Include="SteamGuardAccount.cs" />
     <Compile Include="SteamWeb.cs" />
-    <Compile Include="TimeCorrector.cs" />
+    <Compile Include="TimeAligner.cs" />
     <Compile Include="UserLogin.cs" />
     <Compile Include="Util.cs" />
   </ItemGroup>
