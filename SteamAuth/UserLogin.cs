@@ -85,12 +85,12 @@ namespace SteamAuth
             postData.Add("username", this.Username);
             postData.Add("password", encryptedPassword);
 
-            postData.Add("twofactorcode", this.Requires2FA ? this.TwoFactorCode : "");
+            postData.Add("twofactorcode", this.TwoFactorCode ?? "");
 
             postData.Add("captchagid", this.RequiresCaptcha ? this.CaptchaGID : "-1");
             postData.Add("captcha_text", this.RequiresCaptcha ? this.CaptchaText : "");
 
-            postData.Add("emailsteamid", this.RequiresEmail ? this.SteamID.ToString() : "");
+            postData.Add("emailsteamid", (this.Requires2FA || this.RequiresEmail) ? this.SteamID.ToString() : "");
             postData.Add("emailauth", this.RequiresEmail ? this.EmailCode : "");
 
             postData.Add("rsatimestamp", rsaResponse.Timestamp);
@@ -116,7 +116,7 @@ namespace SteamAuth
                 return LoginResult.NeedEmail;
             }
 
-            if (loginResponse.TwoFactorNeeded)
+            if (loginResponse.TwoFactorNeeded && !loginResponse.Success)
             {
                 this.Requires2FA = true;
                 return LoginResult.Need2FA;
@@ -153,6 +153,9 @@ namespace SteamAuth
 
         private class LoginResponse
         {
+            [JsonProperty("success")]
+            public bool Success { get; set; }
+
             [JsonProperty("login_complete")]
             public bool LoginComplete { get; set; }
 
