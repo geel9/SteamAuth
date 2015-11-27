@@ -189,6 +189,8 @@ namespace SteamAuth
             string referer = _generateConfirmationURL();
 
             string response = SteamWeb.Request(url + queryString, "GET", null, cookies, null);
+            if (response == null) return false;
+
             SendConfirmationResponse confResponse = JsonConvert.DeserializeObject<SendConfirmationResponse>(response);
             return confResponse.Success;
         }

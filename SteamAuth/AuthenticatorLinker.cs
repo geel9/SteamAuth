@@ -73,6 +73,8 @@ namespace SteamAuth
             postData.Add("sms_phone_id", "1");
 
             string response = SteamWeb.MobileLoginRequest(APIEndpoints.STEAMAPI_BASE + "/ITwoFactorService/AddAuthenticator/v0001", "POST", postData);
+            if (response == null) return LinkResult.GeneralFailure;
+
             var addAuthenticatorResponse = JsonConvert.DeserializeObject<AddAuthenticatorResponse>(response);
             if (addAuthenticatorResponse == null || addAuthenticatorResponse.Response == null || addAuthenticatorResponse.Response.Status != 1)
             {
@@ -105,6 +107,8 @@ namespace SteamAuth
                     postData.Set("activation_code", "");
 
                 string response = SteamWeb.MobileLoginRequest(APIEndpoints.STEAMAPI_BASE + "/ITwoFactorService/FinalizeAddAuthenticator/v0001", "POST", postData);
+                if (response == null) return FinalizeResult.GeneralFailure;
+
                 var finalizeResponse = JsonConvert.DeserializeObject<FinalizeAuthenticatorResponse>(response);
 
                 if (finalizeResponse == null || finalizeResponse.Response == null)
@@ -147,6 +151,8 @@ namespace SteamAuth
         private bool _addPhoneNumber()
         {
             string response = SteamWeb.Request(APIEndpoints.COMMUNITY_BASE + "/steamguard/phoneajax?op=add_phone_number&arg=" + WebUtility.UrlEncode(PhoneNumber), "GET", null, _cookies);
+            if (response == null) return false;
+
             var addPhoneNumberResponse = JsonConvert.DeserializeObject<AddPhoneResponse>(response);
             return addPhoneNumberResponse.Success;
         }
@@ -157,6 +163,8 @@ namespace SteamAuth
             postData.Add("op", "has_phone");
             postData.Add("arg", "null");
             string response = SteamWeb.MobileLoginRequest(APIEndpoints.COMMUNITY_BASE + "/steamguard/phoneajax", "GET", postData, _cookies);
+            if (response == null) return false;
+
             var hasPhoneResponse = JsonConvert.DeserializeObject<HasPhoneResponse>(response);
             return hasPhoneResponse.HasPhone;
         }

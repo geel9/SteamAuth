@@ -72,9 +72,9 @@ namespace SteamAuth
                     }
                 }
             }
-            catch (Exception ex)
+            catch (WebException ex)
             {
-                throw;
+                return null;
             }
         }
     }

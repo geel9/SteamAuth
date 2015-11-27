@@ -59,6 +59,7 @@ namespace SteamAuth
 
             postData.Add("username", this.Username);
             response = SteamWeb.MobileLoginRequest(APIEndpoints.COMMUNITY_BASE + "/login/getrsakey", "POST", postData, cookies);
+            if (response == null) return LoginResult.GeneralFailure;
 
             var rsaResponse = JsonConvert.DeserializeObject<RSAResponse>(response);
 
@@ -100,6 +101,8 @@ namespace SteamAuth
             postData.Add("loginfriendlyname", "#login_emailauth_friendlyname_mobile");
 
             response = SteamWeb.MobileLoginRequest(APIEndpoints.COMMUNITY_BASE + "/login/dologin", "POST", postData, cookies);
+            if (response == null) return LoginResult.GeneralFailure;
+
             var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(response);
 
             if (loginResponse.CaptchaNeeded)
