@@ -99,6 +99,7 @@ namespace SteamAuth
             postData.Add("oauth_client_id", "DE45CD61");
             postData.Add("oauth_scope", "read_profile write_profile read_client write_client");
             postData.Add("loginfriendlyname", "#login_emailauth_friendlyname_mobile");
+            postData.Add("donotcache", Util.GetSystemUnixTime().ToString());
 
             response = SteamWeb.MobileLoginRequest(APIEndpoints.COMMUNITY_BASE + "/login/dologin", "POST", postData, cookies);
             if (response == null) return LoginResult.GeneralFailure;
