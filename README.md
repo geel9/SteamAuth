@@ -10,6 +10,10 @@ Currently, this library can:
 * Remove itself from an account
 * Fetch, accept, and deny mobile confirmations
 
+#Requirements
+
+* [Newtonsoft.Json](http://www.newtonsoft.com/json)
+
 # Usage
 To generate login codes if you already have a Shared Secret, simply instantiate a `SteamGuardAccount` and set its `SharedSecret`. Then call `SteamGuardAccount.GenerateSteamGuardCode()`.
 
