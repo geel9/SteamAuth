@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Specialized;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -51,6 +52,28 @@ namespace SteamAuth
 
         private static byte[] steamGuardCodeTranslations = new byte[] { 50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89 };
 
+        public bool DeactivateAuthenticator()
+        {
+            var postData = new NameValueCollection();
+            postData.Add("steamid", this.Session.SteamID.ToString());
+            postData.Add("steamguard_scheme", "2");
+            postData.Add("revocation_code", this.RevocationCode);
+            postData.Add("access_token", this.Session.OAuthToken);
+
+            try
+            {
+                string response = SteamWeb.MobileLoginRequest(APIEndpoints.STEAMAPI_BASE + "/ITwoFactorService/RemoveAuthenticator/v0001", "POST", postData);
+                var removeResponse = JsonConvert.DeserializeObject<RemoveAuthenticatorResponse>(response);
+
+                if (removeResponse == null || removeResponse.Response == null || !removeResponse.Response.Success) return false;
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
+
         public string GenerateSteamGuardCode()
         {
             return GenerateSteamGuardCodeForTime(TimeAligner.GetSteamTime());
@@ -96,7 +119,8 @@ namespace SteamAuth
             return Encoding.UTF8.GetString(codeArray);
         }
 
-        private string _generateConfirmationHashForTime(long time, string tag) {
+        private string _generateConfirmationHashForTime(long time, string tag)
+        {
             byte[] decode = Convert.FromBase64String(this.IdentitySecret);
             int n2 = 8;
             if (tag != null)
@@ -140,6 +164,18 @@ namespace SteamAuth
             catch (Exception e)
             {
                 return null; //Fix soon: catch-all is BAD!
+            }
+        }
+
+        private class RemoveAuthenticatorResponse
+        {
+            [JsonProperty("response")]
+            public RemoveAuthenticatorInternalResponse Response { get; set; }
+
+            internal class RemoveAuthenticatorInternalResponse
+            {
+                [JsonProperty("success")]
+                public bool Success { get; set; }
             }
         }
     }
