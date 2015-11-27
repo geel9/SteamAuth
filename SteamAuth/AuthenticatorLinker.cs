@@ -152,6 +152,7 @@ namespace SteamAuth
                     continue;
                 }
 
+                this.LinkedAccount.FullyEnrolled = true;
                 return FinalizeResult.Success;
             }
 
