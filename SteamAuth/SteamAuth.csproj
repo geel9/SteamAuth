@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="APIEndpoints.cs" />
     <Compile Include="AuthenticatorLinker.cs" />
+    <Compile Include="Confirmation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SessionData.cs" />
     <Compile Include="SteamGuardAccount.cs" />

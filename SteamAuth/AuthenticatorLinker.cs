@@ -46,22 +46,7 @@ namespace SteamAuth
             this.DeviceID = _generateDeviceID();
 
             this._cookies = new CookieContainer();
-            _cookies.Add(new Cookie("mobileClientVersion", "0 (2.1.3)", "/", ".steamcommunity.com"));
-            _cookies.Add(new Cookie("mobileClient", "android", "/", ".steamcommunity.com"));
-
-            _cookies.Add(new Cookie("steamid", session.SteamID.ToString(), "/", ".steamcommunity.com"));
-            _cookies.Add(new Cookie("steamLogin", session.SteamLogin, "/", ".steamcommunity.com")
-            {
-                HttpOnly = true
-            });
-
-            _cookies.Add(new Cookie("steamLoginSecure", session.SteamLoginSecure, "/", ".steamcommunity.com")
-            {
-                HttpOnly = true,
-                Secure = true
-            });
-            _cookies.Add(new Cookie("Steam_Language", "english", "/", ".steamcommunity.com"));
-            _cookies.Add(new Cookie("dob", "", "/", ".steamcommunity.com"));
+            session.AddCookies(_cookies);
         }
 
         public LinkResult AddAuthenticator()

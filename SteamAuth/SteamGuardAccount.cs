@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SteamAuth
 {
@@ -119,6 +121,91 @@ namespace SteamAuth
             return Encoding.UTF8.GetString(codeArray);
         }
 
+        public Confirmation[] FetchConfirmations()
+        {
+            string url = this._generateConfirmationURL();
+
+            CookieContainer cookies = new CookieContainer();
+            this.Session.AddCookies(cookies);
+
+            string response = SteamWeb.Request(url, "GET", null, cookies);
+
+            /*So you're going to see this abomination and you're going to be upset.
+              It's understandable. But the thing is, regex for HTML -- while awful -- makes this way faster than parsing a DOM, plus we don't need another library.
+              And because the data is always in the same place and same format... It's not as if we're trying to naturally understand HTML here. Just extract strings.
+              I'm sorry. */
+
+            Regex confIDRegex = new Regex("data-confid=\"(\\d+)\"");
+            Regex confKeyRegex = new Regex("data-key=\"(\\d+)\"");
+            Regex confDescRegex = new Regex("<div>(Confirm .+)</div>");
+
+            if (!(confIDRegex.IsMatch(response) && confKeyRegex.IsMatch(response) && confDescRegex.IsMatch(response)))
+            {
+                return new Confirmation[0];
+            }
+
+            MatchCollection confIDs = confIDRegex.Matches(response);
+            MatchCollection confKeys = confKeyRegex.Matches(response);
+            MatchCollection confDescs = confDescRegex.Matches(response);
+
+            List<Confirmation> ret = new List<Confirmation>();
+            for (int i = 0; i < confIDs.Count; i++)
+            {
+                string confID = confIDs[i].Groups[1].Value;
+                string confKey = confKeys[i].Groups[1].Value;
+                string confDesc = confDescs[i].Groups[1].Value;
+                Confirmation conf = new Confirmation()
+                {
+                    ConfirmationDescription = confDesc,
+                    ConfirmationID = confID,
+                    ConfirmationKey = confKey
+                };
+                ret.Add(conf);
+            }
+
+            return ret.ToArray();
+        }
+
+        public bool AcceptConfirmation(Confirmation conf)
+        {
+            return _sendConfirmationAjax(conf, "allow");
+        }
+
+        public bool DenyConfirmation(Confirmation conf)
+        {
+            return _sendConfirmationAjax(conf, "cancel");
+        }
+
+        private bool _sendConfirmationAjax(Confirmation conf, string op)
+        {
+            string url = APIEndpoints.COMMUNITY_BASE + "/mobileconf/ajaxop";
+            string queryString = "?op=" + op + "&";
+            queryString += _generateConfirmationQueryParams(op);
+            queryString += "&cid=" + conf.ConfirmationID + "&ck=" + conf.ConfirmationKey;
+            url += queryString;
+
+            CookieContainer cookies = new CookieContainer();
+            this.Session.AddCookies(cookies);
+            string referer = _generateConfirmationURL();
+
+            string response = SteamWeb.Request(url + queryString, "GET", null, cookies, null);
+            SendConfirmationResponse confResponse = JsonConvert.DeserializeObject<SendConfirmationResponse>(response);
+            return confResponse.Success;
+        }
+
+        private string _generateConfirmationURL(string tag = "conf")
+        {
+            string endpoint = APIEndpoints.COMMUNITY_BASE + "/mobileconf/conf?";
+            string queryString = _generateConfirmationQueryParams(tag);
+            return endpoint + queryString;
+        }
+
+        private string _generateConfirmationQueryParams(string tag)
+        {
+            long time = TimeAligner.GetSteamTime();
+            return "p=" + this.DeviceID + "&a=" + this.Session.SteamID.ToString() + "&k=" + _generateConfirmationHashForTime(time, tag) + "&t=" + time + "&m=android&tag=" + tag;
+        }
+
         private string _generateConfirmationHashForTime(long time, string tag)
         {
             byte[] decode = Convert.FromBase64String(this.IdentitySecret);
@@ -177,6 +264,12 @@ namespace SteamAuth
                 [JsonProperty("success")]
                 public bool Success { get; set; }
             }
+        }
+
+        private class SendConfirmationResponse
+        {
+            [JsonProperty("success")]
+            public bool Success { get; set; }
         }
     }
 }
