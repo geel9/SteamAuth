@@ -137,7 +137,7 @@ namespace SteamAuth
 
             Regex confIDRegex = new Regex("data-confid=\"(\\d+)\"");
             Regex confKeyRegex = new Regex("data-key=\"(\\d+)\"");
-            Regex confDescRegex = new Regex("<div>((Confirm|Trade with) .+)</div>");
+            Regex confDescRegex = new Regex("<div>((Confirm|Trade with|Sell -) .+)</div>");
 
             if (!(confIDRegex.IsMatch(response) && confKeyRegex.IsMatch(response) && confDescRegex.IsMatch(response)))
             {
