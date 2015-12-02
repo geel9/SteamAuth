@@ -176,6 +176,38 @@ namespace SteamAuth
             return _sendConfirmationAjax(conf, "cancel");
         }
 
+        /// <summary>
+        /// Refreshes the Steam session. Necessary to perform confirmations if your session has expired or changed.
+        /// </summary>
+        /// <returns></returns>
+        public bool RefreshSession()
+        {
+            string url = APIEndpoints.MOBILEAUTH_GETWGTOKEN;
+            NameValueCollection postData = new NameValueCollection();
+            postData.Add("access_token", this.Session.OAuthToken);
+
+            string response = SteamWeb.Request(url, "POST", postData);
+            if (response == null) return false;
+
+            try
+            {
+                var refreshResponse = JsonConvert.DeserializeObject<RefreshSessionDataResponse>(response);
+                if (refreshResponse == null || refreshResponse.Response == null || String.IsNullOrEmpty(refreshResponse.Response.Token))
+                    return false;
+
+                string token = this.Session.SteamID + "%7C%7C" + refreshResponse.Response.Token;
+                string tokenSecure = this.Session.SteamID + "%7C%7C" + refreshResponse.Response.TokenSecure;
+
+                this.Session.SteamLogin = token;
+                this.Session.SteamLoginSecure = tokenSecure;
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
+
         private bool _sendConfirmationAjax(Confirmation conf, string op)
         {
             string url = APIEndpoints.COMMUNITY_BASE + "/mobileconf/ajaxop";
@@ -253,6 +285,25 @@ namespace SteamAuth
             catch (Exception e)
             {
                 return null; //Fix soon: catch-all is BAD!
+            }
+        }
+
+        //TODO: Determine how to detect an invalid session.
+        public class WGTokenInvalidException : Exception
+        {
+        }
+
+        private class RefreshSessionDataResponse
+        {
+            [JsonProperty("response")]
+            public RefreshSessionDataInternalResponse Response { get; set; }
+            internal class RefreshSessionDataInternalResponse
+            {
+                [JsonProperty("token")]
+                public string Token { get; set; }
+
+                [JsonProperty("token_secure")]
+                public string TokenSecure { get; set; }
             }
         }
 
