@@ -139,9 +139,9 @@ namespace SteamAuth
             Regex confKeyRegex = new Regex("data-key=\"(\\d+)\"");
             Regex confDescRegex = new Regex("<div>((Confirm|Trade with|Sell -) .+)</div>");
 
-            if (!(confIDRegex.IsMatch(response) && confKeyRegex.IsMatch(response) && confDescRegex.IsMatch(response)))
+            if (response == null || !(confIDRegex.IsMatch(response) && confKeyRegex.IsMatch(response) && confDescRegex.IsMatch(response)))
             {
-                if (response == null || !response.Contains("<div>Nothing to confirm</div>"))
+                if (!response.Contains("<div>Nothing to confirm</div>"))
                 {
                     throw new WGTokenInvalidException();
                 }
