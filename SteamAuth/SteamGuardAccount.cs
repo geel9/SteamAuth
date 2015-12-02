@@ -141,7 +141,7 @@ namespace SteamAuth
 
             if (response == null || !(confIDRegex.IsMatch(response) && confKeyRegex.IsMatch(response) && confDescRegex.IsMatch(response)))
             {
-                if (!response.Contains("<div>Nothing to confirm</div>"))
+                if (response == null || !response.Contains("<div>Nothing to confirm</div>"))
                 {
                     throw new WGTokenInvalidException();
                 }
