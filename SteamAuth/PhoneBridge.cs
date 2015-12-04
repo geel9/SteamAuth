@@ -11,6 +11,8 @@ namespace SteamAuth
 {
     public class PhoneBridge
     {
+        public bool OutputToConsole = true;
+
         private Process console;
         private ManualResetEvent mreOutput = new ManualResetEvent(false);
 
@@ -39,7 +41,7 @@ namespace SteamAuth
 
             console.OutputDataReceived += (sender, e) =>
             {
-                if (e.Data.Contains(">@")) return;
+                if (e.Data.Contains(">@") || !OutputToConsole) return;
                 Console.WriteLine(e.Data);
             };
         }
