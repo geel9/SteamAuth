@@ -14,7 +14,7 @@ namespace SteamAuth
         private Process console;
         private ManualResetEvent mreOutput = new ManualResetEvent(false);
 
-        public delegate EventHandler BridgeError(string msg);
+        public delegate void BridgeError(string msg);
         public event BridgeError PhoneBridgeError;
         private void OnPhoneBridgeError(string msg)
         {
