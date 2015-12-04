@@ -31,7 +31,7 @@ namespace SteamAuth
             console.StartInfo.UseShellExecute = false;
             console.StartInfo.RedirectStandardOutput = true;
             console.StartInfo.RedirectStandardInput = true;
-            console.StartInfo.CreateNoWindow = false;
+            console.StartInfo.CreateNoWindow = true;
             console.StartInfo.FileName = "CMD.exe";
             console.StartInfo.Arguments = "/K";
             console.Start();
