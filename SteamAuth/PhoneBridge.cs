@@ -55,14 +55,15 @@ namespace SteamAuth
             if (!DeviceUp()) errored = "Device not detected";
             if (!IsRooted()) errored = "Device not rooted";
             if (!SteamAppInstalled()) errored = "Steam Community App not installed";
-            if (errored != null)
+            if (errored != "")
             {
                 OnPhoneBridgeError(errored);
                 return null;
             }
 
             // Pull the JSON from the device
-            var sgj = JsonConvert.DeserializeObject<SteamGuardAccount>(PullJson());
+            var json = PullJson();
+            var sgj = JsonConvert.DeserializeObject<SteamGuardAccount>(json);
 
             return sgj;
         }
