@@ -75,6 +75,11 @@ namespace SteamAuth
             {
                 if (e.Data.Contains(">@") || e.Data == "") return;
                 if (!e.Data.StartsWith("{")) return;
+                if (e.Data.Contains("No such file or directory"))
+                {
+                    mre.Set();
+                    return;
+                }
                 json = e.Data;
                 mre.Set();
             };
