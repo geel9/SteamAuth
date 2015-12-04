@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SteamAuth
 {
-    class PhoneBridge
+    public class PhoneBridge
     {
         private Process console;
         private ManualResetEvent mreOutput = new ManualResetEvent(false);
