@@ -75,24 +75,36 @@ namespace SteamAuth
 
         private string PullJson()
         {
+            string steamid = null;
             string json = null;
             ManualResetEventSlim mre = new ManualResetEventSlim();
             DataReceivedEventHandler f1 = (sender, e) =>
             {
                 if (e.Data.Contains(">@") || e.Data == "") return;
-                if (!e.Data.StartsWith("{")) return;
                 if (e.Data.Contains("No such file or directory"))
                 {
                     mre.Set();
                     return;
                 }
-                json = e.Data;
-                mre.Set();
+                if (e.Data.Contains("Steamguard-"))
+                {
+                    steamid = e.Data.Split('-')[1];
+                    mre.Set();
+                }
+                if (e.Data.StartsWith("{"))
+                {
+                    json = e.Data;
+                    mre.Set();
+                }
             };
 
             console.OutputDataReceived += f1;
 
-            ExecuteCommand("adb shell su -c \"cat /data/data/com.valvesoftware.android.steam.community/files/Steamguard-*\"");
+            ExecuteCommand("adb shell \"su -c ls /data/data/com.valvesoftware.android.steam.community/files\"");
+            mre.Wait();
+
+            mre.Reset();
+            ExecuteCommand("adb shell su -c \"cat /data/data/com.valvesoftware.android.steam.community/files/Steamguard-" + steamid + "\"");
             mre.Wait();
 
             console.OutputDataReceived -= f1;
