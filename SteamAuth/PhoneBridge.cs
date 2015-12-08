@@ -42,7 +42,8 @@ namespace SteamAuth
             console.OutputDataReceived += (sender, e) =>
             {
                 if (e.Data.Contains(">@") || !OutputToConsole || e.Data == "") return;
-                Console.WriteLine(e.Data);
+                if (OutputToConsole)
+                    Console.WriteLine(e.Data);
             };
         }
 
