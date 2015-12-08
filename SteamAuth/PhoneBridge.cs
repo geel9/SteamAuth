@@ -55,19 +55,22 @@ namespace SteamAuth
             // Check required states
             if (!CheckAdb()) errored = "ADB not found";
             if (!DeviceUp()) errored = "Device not detected";
-            if (!IsRooted()) errored = "Device not rooted";
             if (!SteamAppInstalled()) errored = "Steam Community App not installed";
-            if (errored != "")
+            if (errored != null && errored != "")
             {
                 OnPhoneBridgeError(errored);
                 return null;
             }
 
-            // Pull the JSON from the device
-            var json = PullJson();
-            var sgj = JsonConvert.DeserializeObject<SteamGuardAccount>(json);
+            SteamGuardAccount acc;
 
-            return sgj;
+            if (IsRooted()){
+                acc = JsonConvert.DeserializeObject<SteamGuardAccount>(PullJson());
+            } else {
+                acc = JsonConvert.DeserializeObject<SteamGuardAccount>(PullJsonNoRoot());
+            }
+
+            return acc;
         }
 
         private string PullJson()
@@ -90,6 +93,44 @@ namespace SteamAuth
             console.OutputDataReceived += f1;
 
             ExecuteCommand("adb shell su -c \"cat /data/data/com.valvesoftware.android.steam.community/files/Steamguard-*\"");
+            mre.Wait();
+
+            console.OutputDataReceived -= f1;
+
+            return json;
+        }
+        private string PullJsonNoRoot()
+        {
+            string json = "Error";
+            ManualResetEventSlim mre = new ManualResetEventSlim();
+            DataReceivedEventHandler f1 = (sender, e) =>
+            {
+                if (e.Data.Contains(">@") || e.Data == "") return;
+                if (e.Data == "Done")
+                    mre.Set();
+                if (e.Data.StartsWith("{"))
+                    json = e.Data;
+            };
+
+            console.OutputDataReceived += f1;
+
+            ExecuteCommand("adb backup --noapk com.valvesoftware.android.steam.community & echo Done");
+            mre.Wait();
+
+            mre.Reset();
+            ExecuteCommand("adb push backup.ab /sdcard/steamauth/backup.ab & echo Done");
+            mre.Wait();
+
+            mre.Reset();
+            ExecuteCommand("adb shell \" cd /sdcard/steamauth ; ( printf " + @" '\x1f\x8b\x08\x00\x00\x00\x00\x00'" + " ; tail -c +25 backup.ab ) |  tar xfvz - \" & echo Done");
+            mre.Wait();
+
+            mre.Reset();
+            ExecuteCommand("adb shell \"cat /sdcard/steamauth/apps/*/f/Steamguard-*\" & echo: & echo Done");
+            mre.Wait();
+
+            mre.Reset();
+            ExecuteCommand("adb shell \"rm -dR /sdcard/steamauth\" & echo Done");
             mre.Wait();
 
             console.OutputDataReceived -= f1;
