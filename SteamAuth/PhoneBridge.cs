@@ -24,6 +24,8 @@ namespace SteamAuth
                 PhoneBridgeError(msg);
         }
 
+        private string Error = "";
+
         private void InitConsole()
         {
             if (console != null) return;
@@ -49,17 +51,13 @@ namespace SteamAuth
 
         public SteamGuardAccount ExtractSteamGuardAccount()
         {
-            string errored = "";
-
             InitConsole(); // Init the console
 
             // Check required states
-            if (!CheckAdb()) errored = "ADB not found";
-            if (!DeviceUp()) errored = "Device not detected";
-            if (!SteamAppInstalled()) errored = "Steam Community App not installed";
-            if (errored != null && errored != "")
+            Error = ErrorsFound();
+            if (Error != "")
             {
-                OnPhoneBridgeError(errored);
+                OnPhoneBridgeError(Error);
                 return null;
             }
 
@@ -72,6 +70,14 @@ namespace SteamAuth
             }
 
             return acc;
+        }
+
+        private string ErrorsFound()
+        {
+            if (!CheckAdb()) return "ADB not found";
+            if (!DeviceUp()) return "Device not detected";
+            if (!SteamAppInstalled()) return "Steam Community app not installed";
+            return "";
         }
 
         private string PullJson()
@@ -145,6 +151,8 @@ namespace SteamAuth
             mre.Reset();
             ExecuteCommand("adb shell \"rm -dR /sdcard/steamauth\" & echo Done");
             mre.Wait();
+
+            System.IO.File.Delete("backup.ab");
 
             console.OutputDataReceived -= f1;
 
