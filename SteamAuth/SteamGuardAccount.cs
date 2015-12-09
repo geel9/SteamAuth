@@ -123,7 +123,7 @@ namespace SteamAuth
 
         public Confirmation[] FetchConfirmations()
         {
-            string url = this._generateConfirmationURL();
+            string url = this.GenerateConfirmationURL();
 
             CookieContainer cookies = new CookieContainer();
             this.Session.AddCookies(cookies);
@@ -223,7 +223,7 @@ namespace SteamAuth
 
             CookieContainer cookies = new CookieContainer();
             this.Session.AddCookies(cookies);
-            string referer = _generateConfirmationURL();
+            string referer = GenerateConfirmationURL();
 
             string response = SteamWeb.Request(url, "GET", null, cookies, null);
             if (response == null) return false;
@@ -232,7 +232,7 @@ namespace SteamAuth
             return confResponse.Success;
         }
 
-        private string _generateConfirmationURL(string tag = "conf")
+        public string GenerateConfirmationURL(string tag = "conf")
         {
             string endpoint = APIEndpoints.COMMUNITY_BASE + "/mobileconf/conf?";
             string queryString = _generateConfirmationQueryParams(tag);
