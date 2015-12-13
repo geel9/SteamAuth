@@ -76,7 +76,14 @@ namespace SteamAuth
             if (response == null) return LinkResult.GeneralFailure;
 
             var addAuthenticatorResponse = JsonConvert.DeserializeObject<AddAuthenticatorResponse>(response);
-            if (addAuthenticatorResponse == null || addAuthenticatorResponse.Response == null || addAuthenticatorResponse.Response.Status != 1)
+            if (addAuthenticatorResponse != null && addAuthenticatorResponse.Response != null)
+            {
+                if (addAuthenticatorResponse.Response.Status == 29)
+                    return LinkResult.AuthenticatorPresent;
+                if (addAuthenticatorResponse.Response.Status != 1)
+                    return LinkResult.GeneralFailure;
+            }
+            else
             {
                 return LinkResult.GeneralFailure;
             }
@@ -181,7 +188,8 @@ namespace SteamAuth
             MustProvidePhoneNumber, //No phone number on the account
             MustRemovePhoneNumber, //A phone number is already on the account
             AwaitingFinalization, //Must provide an SMS code
-            GeneralFailure //General failure (really now!)
+            GeneralFailure, //General failure (really now!)
+            AuthenticatorPresent
         }
 
         public enum FinalizeResult

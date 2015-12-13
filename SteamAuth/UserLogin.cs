@@ -59,7 +59,7 @@ namespace SteamAuth
 
             postData.Add("username", this.Username);
             response = SteamWeb.MobileLoginRequest(APIEndpoints.COMMUNITY_BASE + "/login/getrsakey", "POST", postData, cookies);
-            if (response == null) return LoginResult.GeneralFailure;
+            if (response == null || response.Contains("<BODY>\nAn error occurred while processing your request.")) return LoginResult.GeneralFailure;
 
             var rsaResponse = JsonConvert.DeserializeObject<RSAResponse>(response);
 
@@ -126,6 +126,11 @@ namespace SteamAuth
                 return LoginResult.Need2FA;
             }
 
+            if (loginResponse.Message != null && loginResponse.Message.Contains("too many login failures"))
+            {
+                return LoginResult.TooManyFailedLogins;
+            }
+
             if (loginResponse.OAuthData == null || loginResponse.OAuthData.OAuthToken == null || loginResponse.OAuthData.OAuthToken.Length == 0)
             {
                 return LoginResult.GeneralFailure;
@@ -189,6 +194,9 @@ namespace SteamAuth
             [JsonProperty("requires_twofactor")]
             public bool TwoFactorNeeded { get; set; }
 
+            [JsonProperty("message")]
+            public string Message { get; set; }
+
             internal class OAuth
             {
                 [JsonProperty("steamid")]
@@ -236,5 +244,6 @@ namespace SteamAuth
         NeedCaptcha,
         Need2FA,
         NeedEmail,
+        TooManyFailedLogins,
     }
 }
