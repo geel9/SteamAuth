@@ -76,14 +76,17 @@ namespace SteamAuth
             if (response == null) return LinkResult.GeneralFailure;
 
             var addAuthenticatorResponse = JsonConvert.DeserializeObject<AddAuthenticatorResponse>(response);
-            if (addAuthenticatorResponse != null && addAuthenticatorResponse.Response != null)
+            if (addAuthenticatorResponse == null || addAuthenticatorResponse.Response == null)
             {
-                if (addAuthenticatorResponse.Response.Status == 29)
-                    return LinkResult.AuthenticatorPresent;
-                if (addAuthenticatorResponse.Response.Status != 1)
-                    return LinkResult.GeneralFailure;
+                return LinkResult.GeneralFailure;
             }
-            else
+
+            if (addAuthenticatorResponse.Response.Status == 29)
+            {
+                return LinkResult.AuthenticatorPresent;
+            }
+
+            if (addAuthenticatorResponse.Response.Status != 1)
             {
                 return LinkResult.GeneralFailure;
             }
