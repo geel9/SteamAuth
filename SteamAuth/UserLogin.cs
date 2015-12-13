@@ -106,6 +106,11 @@ namespace SteamAuth
 
             var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(response);
 
+            if (loginResponse.Message != null && loginResponse.Message.Contains("Incorrect login"))
+            {
+                return LoginResult.BadCredentials;
+            }
+
             if (loginResponse.CaptchaNeeded)
             {
                 this.RequiresCaptcha = true;
