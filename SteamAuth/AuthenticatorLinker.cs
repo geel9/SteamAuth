@@ -43,7 +43,7 @@ namespace SteamAuth
         public AuthenticatorLinker(SessionData session)
         {
             this._session = session;
-            this.DeviceID = _generateDeviceID();
+            this.DeviceID = GenerateDeviceID();
 
             this._cookies = new CookieContainer();
             session.AddCookies(_cookies);
@@ -239,7 +239,7 @@ namespace SteamAuth
             public bool Success { get; set; }
         }
 
-        private string _generateDeviceID()
+        public static string GenerateDeviceID()
         {
             using (var sha1 = new SHA1Managed())
             {

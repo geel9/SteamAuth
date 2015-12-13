@@ -241,6 +241,9 @@ namespace SteamAuth
 
         public string GenerateConfirmationQueryParams(string tag)
         {
+            if (String.IsNullOrEmpty(DeviceID))
+                DeviceID = AuthenticatorLinker.GenerateDeviceID();
+
             long time = TimeAligner.GetSteamTime();
             return "p=" + this.DeviceID + "&a=" + this.Session.SteamID.ToString() + "&k=" + _generateConfirmationHashForTime(time, tag) + "&t=" + time + "&m=android&tag=" + tag;
         }
