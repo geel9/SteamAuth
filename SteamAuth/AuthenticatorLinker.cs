@@ -251,8 +251,27 @@ namespace SteamAuth
                 secureRandom.GetBytes(randomBytes);
 
                 byte[] hashedBytes = sha1.ComputeHash(randomBytes);
-                return "android:" + BitConverter.ToString(hashedBytes).Replace("-", "");
+                string random32 = BitConverter.ToString(hashedBytes).Replace("-", "").Substring(0, 32).ToLower();
+
+                return "android:" + SplitOnRatios(random32, new[] { 8, 4, 4, 4, 12 }, "-");
             }
+        }
+
+        private static string SplitOnRatios(string str, int[] ratios, string intermediate)
+        {
+            string result = "";
+
+            int pos = 0;
+            for (int index = 0; index < ratios.Length; index++)
+            {
+                result += str.Substring(pos, ratios[index]);
+                pos = ratios[index];
+
+                if (index < ratios.Length - 1)
+                    result += intermediate;
+            }
+
+            return result;
         }
     }
 }
