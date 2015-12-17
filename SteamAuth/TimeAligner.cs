@@ -44,7 +44,7 @@ namespace SteamAuth
                     TimeAligner._timeDifference = (int)(query.Response.ServerTime - currentTime);
                     TimeAligner._aligned = true;
                 }
-                catch (WebException e)
+                catch (WebException)
                 {
                     return;
                 }
