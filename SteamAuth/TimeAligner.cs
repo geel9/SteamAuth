@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using System;
+using System.Threading.Tasks;
+using System.Net;
 using Newtonsoft.Json;
 
 namespace SteamAuth
@@ -21,6 +23,15 @@ namespace SteamAuth
             return Util.GetSystemUnixTime() + _timeDifference;
         }
 
+        public static async Task<long> GetSteamTimeAsync()
+        {
+            if (!TimeAligner._aligned)
+            {
+                await TimeAligner.AlignTimeAsync();
+            }
+            return Util.GetSystemUnixTime() + _timeDifference;
+        }
+
         public static void AlignTime()
         {
             long currentTime = Util.GetSystemUnixTime();
@@ -37,6 +48,23 @@ namespace SteamAuth
                 {
                     return;
                 }
+            }
+        }
+
+        public static async Task AlignTimeAsync()
+        {
+            long currentTime = Util.GetSystemUnixTime();
+            WebClient client = new WebClient();
+            try
+            {
+                string response = await client.UploadStringTaskAsync(new Uri(APIEndpoints.TWO_FACTOR_TIME_QUERY), "steamid=0");
+                TimeQuery query = JsonConvert.DeserializeObject<TimeQuery>(response);
+                TimeAligner._timeDifference = (int)(query.Response.ServerTime - currentTime);
+                TimeAligner._aligned = true;
+            }
+            catch (WebException)
+            {
+                return;
             }
         }
 
