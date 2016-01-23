@@ -71,7 +71,7 @@ namespace SteamAuth
                 if (removeResponse == null || removeResponse.Response == null || !removeResponse.Response.Success) return false;
                 return true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }
@@ -115,7 +115,7 @@ namespace SteamAuth
                     codePoint /= steamGuardCodeTranslations.Length;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return null; //Change later, catch-alls are bad!
             }
@@ -258,7 +258,7 @@ namespace SteamAuth
                 this.Session.SteamLoginSecure = tokenSecure;
                 return true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }
@@ -290,7 +290,7 @@ namespace SteamAuth
                 this.Session.SteamLoginSecure = tokenSecure;
                 return true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }
@@ -373,7 +373,7 @@ namespace SteamAuth
                 string hash = WebUtility.UrlEncode(encodedData);
                 return hash;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return null; //Fix soon: catch-all is BAD!
             }
