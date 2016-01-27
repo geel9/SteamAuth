@@ -1,8 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
+		<version>1.0.1</version>
+		<releaseNotes>Fix phone number not being added to account during linking process, resulting in an infinite loop.</releaseNotes>
+	
         <id>SteamAuth</id>
-        <version>1.0.0</version>
         <title>SteamAuth</title>
         <authors>geel9,Jessecar96</authors>
         <owners>geel9,Jessecar96,BlueRaja</owners>
@@ -10,7 +12,6 @@
         <projectUrl>https://github.com/geel9/SteamAuth</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>A C# library to provide Steam Mobile Authenticator functionality</description>
-        <releaseNotes>Inital NuGet release</releaseNotes>
         <copyright>Copyright 2016</copyright>
         <tags>SteamAuth Steam Mobile Authenticator Authentication C# SteamBot</tags>
         <dependencies>
