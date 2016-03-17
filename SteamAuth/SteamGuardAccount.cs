@@ -284,16 +284,11 @@ namespace SteamAuth
             NameValueCollection postData = new NameValueCollection();
             postData.Add("access_token", this.Session.OAuthToken);
 
-            string response = null;
-            try {
-                response = await SteamWeb.RequestAsync(url, "POST", postData);
-                if (response == null) return false;
-            }catch{
-                return false;
-            }
-
             try
             {
+                string response = await SteamWeb.RequestAsync(url, "POST", postData);
+                if (response == null) return false;
+                
                 var refreshResponse = JsonConvert.DeserializeObject<RefreshSessionDataResponse>(response);
                 if (refreshResponse == null || refreshResponse.Response == null || String.IsNullOrEmpty(refreshResponse.Response.Token))
                     return false;
