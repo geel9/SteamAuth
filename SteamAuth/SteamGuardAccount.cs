@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace SteamAuth
 {
+    [Serializable]
     public class SteamGuardAccount
     {
         [JsonProperty("shared_secret")]
@@ -51,8 +52,14 @@ namespace SteamAuth
         [JsonProperty("fully_enrolled")]
         public bool FullyEnrolled { get; set; }
 
-        public SessionData Session { get; set; }
-
+        [NonSerialized]
+        private SessionData session;
+        public SessionData Session
+        {
+            get { return session; }
+            set { session = value; }
+        }
+        
         private static byte[] steamGuardCodeTranslations = new byte[] { 50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89 };
 
         public bool DeactivateAuthenticator(int scheme = 2)
