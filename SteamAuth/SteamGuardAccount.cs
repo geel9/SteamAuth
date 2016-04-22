@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace SteamAuth
 {
@@ -167,7 +168,7 @@ namespace SteamAuth
             {
                 string confID = confIDs[i].Groups[1].Value;
                 string confKey = confKeys[i].Groups[1].Value;
-                string confDesc = confDescs[i].Groups[1].Value;
+                string confDesc = HttpUtility.UrlDecode(confDescs[i].Groups[1].Value);
                 Confirmation conf = new Confirmation()
                 {
                     Description = confDesc,
