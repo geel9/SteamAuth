@@ -168,7 +168,7 @@ namespace SteamAuth
             {
                 string confID = confIDs[i].Groups[1].Value;
                 string confKey = confKeys[i].Groups[1].Value;
-                string confDesc = HttpUtility.UrlDecode(confDescs[i].Groups[1].Value);
+                string confDesc = HttpUtility.HtmlDecode(confDescs[i].Groups[1].Value);
                 Confirmation conf = new Confirmation()
                 {
                     Description = confDesc,
