@@ -252,7 +252,16 @@ namespace SteamAuth
             NameValueCollection postData = new NameValueCollection();
             postData.Add("access_token", this.Session.OAuthToken);
 
-            string response = SteamWeb.Request(url, "POST", postData);
+            string response = null;
+            try
+            {
+                response = SteamWeb.Request(url, "POST", postData);
+            }
+            catch (WebException)
+            {
+                return false;
+            }
+
             if (response == null) return false;
 
             try
@@ -284,7 +293,16 @@ namespace SteamAuth
             NameValueCollection postData = new NameValueCollection();
             postData.Add("access_token", this.Session.OAuthToken);
 
-            string response = await SteamWeb.RequestAsync(url, "POST", postData);
+            string response = null;
+            try
+            {
+                response = await SteamWeb.RequestAsync(url, "POST", postData);
+            }
+            catch (WebException)
+            {
+                return false;
+            }
+
             if (response == null) return false;
 
             try
