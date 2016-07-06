@@ -1,7 +1,9 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 
 namespace SteamAuth
 {
+    [Serializable]
     public class SessionData
     {
         public string SessionID { get; set; }
