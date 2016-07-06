@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace SteamAuth
 {
+    [Serializable]
     public class Confirmation
     {
         public string ID;
