@@ -62,6 +62,7 @@ namespace SteamAuth
                 {
                     if (response.StatusCode != HttpStatusCode.OK)
                     {
+                        HandleFailedWebRequestResponse(response);
                         return null;
                     }
 
@@ -72,8 +73,9 @@ namespace SteamAuth
                     }
                 }
             }
-            catch (WebException)
+            catch (WebException e)
             {
+                HandleFailedWebRequestResponse(e.Response as HttpWebResponse);
                 return null;
             }
         }
@@ -115,10 +117,11 @@ namespace SteamAuth
 
             try
             {
-                HttpWebResponse response = (HttpWebResponse) await request.GetResponseAsync();
+                HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync();
 
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
+                    HandleFailedWebRequestResponse(response);
                     return null;
                 }
 
@@ -128,9 +131,32 @@ namespace SteamAuth
                     return responseData;
                 }
             }
-            catch (WebException)
+            catch (WebException e)
             {
+                HandleFailedWebRequestResponse(e.Response as HttpWebResponse);
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Raise exceptions relevant to this HttpWebResponse -- EG, to signal that our oauth token has expired.
+        /// </summary>
+        private static void HandleFailedWebRequestResponse(HttpWebResponse response)
+        {
+            if (response == null) return;
+
+            //Redirecting -- likely to a steammobile:// URI
+            if (response.StatusCode == HttpStatusCode.Found)
+            {
+                var location = response.Headers.Get("Location");
+                if (!string.IsNullOrEmpty(location))
+                {
+                    //Our OAuth token has expired
+                    if (location == "steammobile://lostauth")
+                    {
+                        throw new SteamGuardAccount.WGTokenExpiredException();
+                    }
+                }
             }
         }
     }

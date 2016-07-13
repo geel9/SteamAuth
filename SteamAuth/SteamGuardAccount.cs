@@ -186,11 +186,10 @@ namespace SteamAuth
               And because the data is always in the same place and same format... It's not as if we're trying to naturally understand HTML here. Just extract strings.
               I'm sorry. */
 
-            Regex confIDRegex = new Regex("data-confid=\"(\\d+)\"");
-            Regex confKeyRegex = new Regex("data-key=\"(\\d+)\"");
+            Regex confIDKeyRegex = new Regex("<div class=\"mobileconf_list_entry\" id=\"conf\\d+\" data-confid=\"(\\d+)\" data-key=\"(\\d+)\"");
             Regex confDescRegex = new Regex("<div>((Confirm|Trade with|Sell -) .+)</div>");
 
-            if (response == null || !(confIDRegex.IsMatch(response) && confKeyRegex.IsMatch(response) && confDescRegex.IsMatch(response)))
+            if (response == null || !(confIDKeyRegex.IsMatch(response) && confDescRegex.IsMatch(response)))
             {
                 if (response == null || !response.Contains("<div>Nothing to confirm</div>"))
                 {
@@ -200,15 +199,14 @@ namespace SteamAuth
                 return new Confirmation[0];
             }
 
-            MatchCollection confIDs = confIDRegex.Matches(response);
-            MatchCollection confKeys = confKeyRegex.Matches(response);
+            MatchCollection confIDKeys = confIDKeyRegex.Matches(response);
             MatchCollection confDescs = confDescRegex.Matches(response);
 
             List<Confirmation> ret = new List<Confirmation>();
-            for (int i = 0; i < confIDs.Count; i++)
+            for (int i = 0; i < confIDKeys.Count; i++)
             {
-                string confID = confIDs[i].Groups[1].Value;
-                string confKey = confKeys[i].Groups[1].Value;
+                string confID = confIDKeys[i].Groups[1].Value;
+                string confKey = confIDKeys[i].Groups[2].Value;
                 string confDesc = confDescs[i].Groups[1].Value;
                 Confirmation conf = new Confirmation()
                 {
@@ -228,7 +226,7 @@ namespace SteamAuth
             if (confDetails == null || !confDetails.Success) return -1;
 
             Regex tradeOfferIDRegex = new Regex("<div class=\"tradeoffer\" id=\"tradeofferid_(\\d+)\" >");
-            if(!tradeOfferIDRegex.IsMatch(confDetails.HTML)) return -1;
+            if (!tradeOfferIDRegex.IsMatch(confDetails.HTML)) return -1;
             return long.Parse(tradeOfferIDRegex.Match(confDetails.HTML).Groups[1].Value);
         }
 
@@ -419,14 +417,17 @@ namespace SteamAuth
                 string hash = WebUtility.UrlEncode(encodedData);
                 return hash;
             }
-            catch (Exception)
+            catch
             {
-                return null; //Fix soon: catch-all is BAD!
+                return null;
             }
         }
 
-        //TODO: Determine how to detect an invalid session.
         public class WGTokenInvalidException : Exception
+        {
+        }
+
+        public class WGTokenExpiredException : Exception
         {
         }
 
