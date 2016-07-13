@@ -237,9 +237,19 @@ namespace SteamAuth
             return _sendConfirmationAjax(conf, "allow");
         }
 
+        public bool AcceptConfirmations(IEnumerable<Confirmation> confs)
+        {
+            return _sendConfirmationMultiAjax(confs, "allow");
+        }
+
         public bool DenyConfirmation(Confirmation conf)
         {
             return _sendConfirmationAjax(conf, "cancel");
+        }
+
+        public bool DenyConfirmations(IEnumerable<Confirmation> confs)
+        {
+            return _sendConfirmationMultiAjax(confs, "cancel");
         }
 
         /// <summary>
@@ -348,6 +358,26 @@ namespace SteamAuth
             string queryString = "?op=" + op + "&";
             queryString += GenerateConfirmationQueryParams(op);
             queryString += "&cid=" + conf.ID + "&ck=" + conf.Key;
+            url += queryString;
+
+            CookieContainer cookies = new CookieContainer();
+            this.Session.AddCookies(cookies);
+            string referer = GenerateConfirmationURL();
+
+            string response = SteamWeb.Request(url, "GET", null, cookies, null);
+            if (response == null) return false;
+
+            SendConfirmationResponse confResponse = JsonConvert.DeserializeObject<SendConfirmationResponse>(response);
+            return confResponse.Success;
+        }
+
+        private bool _sendConfirmationMultiAjax(IEnumerable<Confirmation> confs, string op)
+        {
+            string url = APIEndpoints.COMMUNITY_BASE + "/mobileconf/multiajaxop";
+            string queryString = "?op=" + op + "&";
+            queryString += GenerateConfirmationQueryParams(op);
+            foreach (Confirmation conf in confs)
+                queryString += "&cid[]=" + conf.ID + "&ck[]=" + conf.Key;
             url += queryString;
 
             CookieContainer cookies = new CookieContainer();
