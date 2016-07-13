@@ -129,7 +129,7 @@ namespace SteamAuth
             CookieContainer cookies = new CookieContainer();
             this.Session.AddCookies(cookies);
 
-            string response = SteamWeb.Request(url, "GET", null, cookies);
+            string response = SteamWeb.Request(url, "GET", String.Empty, cookies);
 
             /*So you're going to see this abomination and you're going to be upset.
               It's understandable. But the thing is, regex for HTML -- while awful -- makes this way faster than parsing a DOM, plus we don't need another library.
@@ -344,7 +344,7 @@ namespace SteamAuth
             this.Session.AddCookies(cookies);
             string referer = GenerateConfirmationURL();
 
-            string response = SteamWeb.Request(url, "GET", null, cookies, null);
+            string response = SteamWeb.Request(url, "GET", String.Empty, cookies, null);
             if (String.IsNullOrEmpty(response)) return null;
 
             var confResponse = JsonConvert.DeserializeObject<ConfirmationDetailsResponse>(response);
@@ -364,7 +364,7 @@ namespace SteamAuth
             this.Session.AddCookies(cookies);
             string referer = GenerateConfirmationURL();
 
-            string response = SteamWeb.Request(url, "GET", null, cookies, null);
+            string response = SteamWeb.Request(url, "GET", String.Empty, cookies, null);
             if (response == null) return false;
 
             SendConfirmationResponse confResponse = JsonConvert.DeserializeObject<SendConfirmationResponse>(response);
@@ -374,17 +374,16 @@ namespace SteamAuth
         private bool _sendConfirmationMultiAjax(IEnumerable<Confirmation> confs, string op)
         {
             string url = APIEndpoints.COMMUNITY_BASE + "/mobileconf/multiajaxop";
-            string queryString = "?op=" + op + "&";
+            string queryString = "op=" + op + "&";
             queryString += GenerateConfirmationQueryParams(op);
             foreach (Confirmation conf in confs)
                 queryString += "&cid[]=" + conf.ID + "&ck[]=" + conf.Key;
-            url += queryString;
 
             CookieContainer cookies = new CookieContainer();
             this.Session.AddCookies(cookies);
             string referer = GenerateConfirmationURL();
 
-            string response = SteamWeb.Request(url, "GET", null, cookies, null);
+            string response = SteamWeb.Request(url, "POST", queryString, cookies, null);
             if (response == null) return false;
 
             SendConfirmationResponse confResponse = JsonConvert.DeserializeObject<SendConfirmationResponse>(response);
