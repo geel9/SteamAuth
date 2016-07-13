@@ -43,7 +43,7 @@ namespace SteamAuth
         public AuthenticatorLinker(SessionData session)
         {
             this._session = session;
-            this.DeviceID = GenerateDeviceID();
+            this.DeviceID = $"android:{Guid.NewGuid()}";
 
             this._cookies = new CookieContainer();
             session.AddCookies(_cookies);
@@ -255,38 +255,6 @@ namespace SteamAuth
         {
             [JsonProperty("success")]
             public bool Success { get; set; }
-        }
-
-        public static string GenerateDeviceID()
-        {
-            using (var sha1 = new SHA1Managed())
-            {
-                RNGCryptoServiceProvider secureRandom = new RNGCryptoServiceProvider();
-                byte[] randomBytes = new byte[8];
-                secureRandom.GetBytes(randomBytes);
-
-                byte[] hashedBytes = sha1.ComputeHash(randomBytes);
-                string random32 = BitConverter.ToString(hashedBytes).Replace("-", "").Substring(0, 32).ToLower();
-
-                return "android:" + SplitOnRatios(random32, new[] { 8, 4, 4, 4, 12 }, "-");
-            }
-        }
-
-        private static string SplitOnRatios(string str, int[] ratios, string intermediate)
-        {
-            string result = "";
-
-            int pos = 0;
-            for (int index = 0; index < ratios.Length; index++)
-            {
-                result += str.Substring(pos, ratios[index]);
-                pos = ratios[index];
-
-                if (index < ratios.Length - 1)
-                    result += intermediate;
-            }
-
-            return result;
         }
     }
 }
