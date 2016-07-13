@@ -24,6 +24,12 @@ namespace SteamAuth
         public static string Request(string url, string method, NameValueCollection data = null, CookieContainer cookies = null, NameValueCollection headers = null, string referer = APIEndpoints.COMMUNITY_BASE)
         {
             string query = (data == null ? string.Empty : string.Join("&", Array.ConvertAll(data.AllKeys, key => String.Format("{0}={1}", WebUtility.UrlEncode(key), WebUtility.UrlEncode(data[key])))));
+            return Request(url, method, query, cookies, headers, referer);
+        }
+
+        public static string Request(string url, string method, string data = null, CookieContainer cookies = null, NameValueCollection headers = null, string referer = APIEndpoints.COMMUNITY_BASE)
+        {
+            string query = data ?? string.Empty;
             if (method == "GET")
             {
                 url += (url.Contains("?") ? "&" : "?") + query;
