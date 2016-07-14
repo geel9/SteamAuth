@@ -29,6 +29,11 @@ namespace SteamAuth
                 url += (url.Contains("?") ? "&" : "?") + query;
             }
 
+            return Request(url, method, query, cookies, headers, referer);
+        }
+
+        public static string Request(string url, string method, string dataString = null, CookieContainer cookies = null, NameValueCollection headers = null, string referer = APIEndpoints.COMMUNITY_BASE)
+        {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = method;
             request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
@@ -49,10 +54,10 @@ namespace SteamAuth
             if (method == "POST")
             {
                 request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-                request.ContentLength = query.Length;
+                request.ContentLength = dataString.Length;
 
                 StreamWriter requestStream = new StreamWriter(request.GetRequestStream());
-                requestStream.Write(query);
+                requestStream.Write(dataString);
                 requestStream.Close();
             }
 

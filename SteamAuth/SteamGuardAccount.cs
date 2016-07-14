@@ -129,7 +129,7 @@ namespace SteamAuth
             CookieContainer cookies = new CookieContainer();
             this.Session.AddCookies(cookies);
 
-            string response = SteamWeb.Request(url, "GET", null, cookies);
+            string response = SteamWeb.Request(url, "GET", "", cookies);
 
             /*So you're going to see this abomination and you're going to be upset.
               It's understandable. But the thing is, regex for HTML -- while awful -- makes this way faster than parsing a DOM, plus we don't need another library.
@@ -228,6 +228,16 @@ namespace SteamAuth
             Regex tradeOfferIDRegex = new Regex("<div class=\"tradeoffer\" id=\"tradeofferid_(\\d+)\" >");
             if (!tradeOfferIDRegex.IsMatch(confDetails.HTML)) return -1;
             return long.Parse(tradeOfferIDRegex.Match(confDetails.HTML).Groups[1].Value);
+        }
+
+        public bool AcceptMultipleConfirmations(Confirmation[] confs)
+        {
+            return _sendMultiConfirmationAjax(confs, "allow");
+        }
+
+        public bool DenyMultipleConfirmations(Confirmation[] confs)
+        {
+            return _sendMultiConfirmationAjax(confs, "cancel");
         }
 
         public bool AcceptConfirmation(Confirmation conf)
@@ -332,7 +342,7 @@ namespace SteamAuth
             this.Session.AddCookies(cookies);
             string referer = GenerateConfirmationURL();
 
-            string response = SteamWeb.Request(url, "GET", null, cookies, null);
+            string response = SteamWeb.Request(url, "GET", "", cookies, null);
             if (String.IsNullOrEmpty(response)) return null;
 
             var confResponse = JsonConvert.DeserializeObject<ConfirmationDetailsResponse>(response);
@@ -352,7 +362,28 @@ namespace SteamAuth
             this.Session.AddCookies(cookies);
             string referer = GenerateConfirmationURL();
 
-            string response = SteamWeb.Request(url, "GET", null, cookies, null);
+            string response = SteamWeb.Request(url, "GET", "", cookies, null);
+            if (response == null) return false;
+
+            SendConfirmationResponse confResponse = JsonConvert.DeserializeObject<SendConfirmationResponse>(response);
+            return confResponse.Success;
+        }
+
+        private bool _sendMultiConfirmationAjax(Confirmation[] confs, string op)
+        {
+            string url = APIEndpoints.COMMUNITY_BASE + "/mobileconf/multiajaxop";
+
+            string query = "op=" + op + "&" + GenerateConfirmationQueryParams(op);
+            foreach (var conf in confs)
+            {
+                query += "&cid[]=" + conf.ID + "&ck[]=" + conf.Key;
+            }
+
+            CookieContainer cookies = new CookieContainer();
+            this.Session.AddCookies(cookies);
+            string referer = GenerateConfirmationURL();
+
+            string response = SteamWeb.Request(url, "POST", query, cookies, null);
             if (response == null) return false;
 
             SendConfirmationResponse confResponse = JsonConvert.DeserializeObject<SendConfirmationResponse>(response);
@@ -371,8 +402,27 @@ namespace SteamAuth
             if (String.IsNullOrEmpty(DeviceID))
                 throw new ArgumentException("Device ID is not present");
 
+            var queryParams = GenerateConfirmationQueryParamsAsNVC(tag);
+
+            return "p=" + queryParams["p"] + "&a=" + queryParams["a"] + "&k=" + queryParams["k"] + "&t=" + queryParams["t"] + "&m=android&tag=" + queryParams["tag"];
+        }
+
+        public NameValueCollection GenerateConfirmationQueryParamsAsNVC(string tag)
+        {
+            if (String.IsNullOrEmpty(DeviceID))
+                throw new ArgumentException("Device ID is not present");
+
             long time = TimeAligner.GetSteamTime();
-            return "p=" + this.DeviceID + "&a=" + this.Session.SteamID.ToString() + "&k=" + _generateConfirmationHashForTime(time, tag) + "&t=" + time + "&m=android&tag=" + tag;
+
+            var ret = new NameValueCollection();
+            ret.Add("p", this.DeviceID);
+            ret.Add("a", this.Session.SteamID.ToString());
+            ret.Add("k", _generateConfirmationHashForTime(time, tag));
+            ret.Add("t", time.ToString());
+            ret.Add("m", "android");
+            ret.Add("tag", tag);
+
+            return ret;
         }
 
         private string _generateConfirmationHashForTime(long time, string tag)
