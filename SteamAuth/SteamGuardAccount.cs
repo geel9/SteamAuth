@@ -89,7 +89,8 @@ namespace SteamAuth
                 return "";
             }
 
-            byte[] sharedSecretArray = Convert.FromBase64String(this.SharedSecret);
+            string sharedSecretUnescaped = Regex.Unescape(this.SharedSecret);
+            byte[] sharedSecretArray = Convert.FromBase64String(sharedSecretUnescaped);
             byte[] timeArray = new byte[8];
 
             time /= 30L;
