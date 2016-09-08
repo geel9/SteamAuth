@@ -131,7 +131,23 @@ namespace SteamAuth
             this.Session.AddCookies(cookies);
 
             string response = SteamWeb.Request(url, "GET", "", cookies);
+            return FetchConfirmationInternal(response);
+        }
 
+        public async Task<Confirmation[]> FetchConfirmationsAsync()
+        {
+            string url = this.GenerateConfirmationURL();
+
+            CookieContainer cookies = new CookieContainer();
+            this.Session.AddCookies(cookies);
+
+            string response = await SteamWeb.RequestAsync(url, "GET", null, cookies);
+
+            return FetchConfirmationInternal(response);
+        }
+
+        public Confirmation[] FetchConfirmationInternal(string response)
+        {
             /*So you're going to see this abomination and you're going to be upset.
               It's understandable. But the thing is, regex for HTML -- while awful -- makes this way faster than parsing a DOM, plus we don't need another library.
               And because the data is always in the same place and same format... It's not as if we're trying to naturally understand HTML here. Just extract strings.
@@ -160,55 +176,7 @@ namespace SteamAuth
             {
                 string confID = confIDs[i].Groups[1].Value;
                 string confKey = confKeys[i].Groups[1].Value;
-                string confDesc = confDescs[i].Groups[1].Value;
-                Confirmation conf = new Confirmation()
-                {
-                    Description = confDesc,
-                    ID = confID,
-                    Key = confKey
-                };
-                ret.Add(conf);
-            }
-
-            return ret.ToArray();
-        }
-
-        public async Task<Confirmation[]> FetchConfirmationsAsync()
-        {
-            string url = this.GenerateConfirmationURL();
-
-            CookieContainer cookies = new CookieContainer();
-            this.Session.AddCookies(cookies);
-
-            string response = await SteamWeb.RequestAsync(url, "GET", null, cookies);
-
-            /*So you're going to see this abomination and you're going to be upset.
-              It's understandable. But the thing is, regex for HTML -- while awful -- makes this way faster than parsing a DOM, plus we don't need another library.
-              And because the data is always in the same place and same format... It's not as if we're trying to naturally understand HTML here. Just extract strings.
-              I'm sorry. */
-
-            Regex confIDKeyRegex = new Regex("<div class=\"mobileconf_list_entry\" id=\"conf\\d+\" data-confid=\"(\\d+)\" data-key=\"(\\d+)\"");
-            Regex confDescRegex = new Regex("<div>((Confirm|Trade with|Sell -) .+)</div>");
-
-            if (response == null || !(confIDKeyRegex.IsMatch(response) && confDescRegex.IsMatch(response)))
-            {
-                if (response == null || !response.Contains("<div>Nothing to confirm</div>"))
-                {
-                    throw new WGTokenInvalidException();
-                }
-
-                return new Confirmation[0];
-            }
-
-            MatchCollection confIDKeys = confIDKeyRegex.Matches(response);
-            MatchCollection confDescs = confDescRegex.Matches(response);
-
-            List<Confirmation> ret = new List<Confirmation>();
-            for (int i = 0; i < confIDKeys.Count; i++)
-            {
-                string confID = confIDKeys[i].Groups[1].Value;
-                string confKey = confIDKeys[i].Groups[2].Value;
-                string confDesc = confDescs[i].Groups[1].Value;
+                string confDesc = System.Web.HttpUtility.HtmlDecode(confDescs[i].Groups[1].Value);
                 Confirmation conf = new Confirmation()
                 {
                     Description = confDesc,
