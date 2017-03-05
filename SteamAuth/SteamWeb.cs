@@ -29,6 +29,11 @@ namespace SteamAuth
                 url += (url.Contains("?") ? "&" : "?") + query;
             }
 
+            return Request(url, method, query, cookies, headers, referer);
+        }
+
+        public static string Request(string url, string method, string dataString = null, CookieContainer cookies = null, NameValueCollection headers = null, string referer = APIEndpoints.COMMUNITY_BASE)
+        {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = method;
             request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
@@ -49,10 +54,10 @@ namespace SteamAuth
             if (method == "POST")
             {
                 request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-                request.ContentLength = query.Length;
+                request.ContentLength = dataString.Length;
 
                 StreamWriter requestStream = new StreamWriter(request.GetRequestStream());
-                requestStream.Write(query);
+                requestStream.Write(dataString);
                 requestStream.Close();
             }
 
@@ -62,6 +67,7 @@ namespace SteamAuth
                 {
                     if (response.StatusCode != HttpStatusCode.OK)
                     {
+                        HandleFailedWebRequestResponse(response, url);
                         return null;
                     }
 
@@ -72,8 +78,9 @@ namespace SteamAuth
                     }
                 }
             }
-            catch (WebException)
+            catch (WebException e)
             {
+                HandleFailedWebRequestResponse(e.Response as HttpWebResponse, url);
                 return null;
             }
         }
@@ -115,10 +122,11 @@ namespace SteamAuth
 
             try
             {
-                HttpWebResponse response = (HttpWebResponse) await request.GetResponseAsync();
+                HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync();
 
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
+                    HandleFailedWebRequestResponse(response, url);
                     return null;
                 }
 
@@ -128,9 +136,33 @@ namespace SteamAuth
                     return responseData;
                 }
             }
-            catch (WebException)
+            catch (WebException e)
             {
+                HandleFailedWebRequestResponse(e.Response as HttpWebResponse, url);
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Raise exceptions relevant to this HttpWebResponse -- EG, to signal that our oauth token has expired.
+        /// </summary>
+        private static void HandleFailedWebRequestResponse(HttpWebResponse response, string requestURL)
+        {
+            if (response == null) return;
+
+            //Redirecting -- likely to a steammobile:// URI
+            if (response.StatusCode == HttpStatusCode.Found)
+            {
+                var location = response.Headers.Get("Location");
+                if (!string.IsNullOrEmpty(location))
+                {
+                    //Our OAuth token has expired. This is given both when we must refresh our session, or the entire OAuth Token cannot be refreshed anymore.
+                    //Thus, we should only throw this exception when we're attempting to refresh our session.
+                    if (location == "steammobile://lostauth" && requestURL == APIEndpoints.MOBILEAUTH_GETWGTOKEN)
+                    {
+                        throw new SteamGuardAccount.WGTokenExpiredException();
+                    }
+                }
             }
         }
     }
