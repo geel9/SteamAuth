@@ -1,12 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace SteamAuth
 {
@@ -15,8 +12,6 @@ namespace SteamAuth
     /// </summary>
     public class AuthenticatorLinker
     {
-
-
         /// <summary>
         /// Set to register a new phone number when linking. If a phone number is not set on the account, this must be set. If a phone number is set on the account, this must be null.
         /// </summary>
@@ -164,13 +159,22 @@ namespace SteamAuth
             var postData = new NameValueCollection();
             postData.Add("op", "check_sms_code");
             postData.Add("arg", smsCode);
+            postData.Add("checkfortos", "0");
+            postData.Add("skipvoip", "1");
             postData.Add("sessionid", _session.SessionID);
 
             string response = SteamWeb.Request(APIEndpoints.COMMUNITY_BASE + "/steamguard/phoneajax", "POST", postData, _cookies);
             if (response == null) return false;
 
             var addPhoneNumberResponse = JsonConvert.DeserializeObject<AddPhoneResponse>(response);
-            return addPhoneNumberResponse.Success;
+
+            if (!addPhoneNumberResponse.Success)
+            {
+                Thread.Sleep(3500); //It seems that Steam needs a few seconds to finalize the phone number on the account.
+                return _hasPhoneAttached();
+            }
+
+            return true;
         }
 
         private bool _addPhoneNumber()
