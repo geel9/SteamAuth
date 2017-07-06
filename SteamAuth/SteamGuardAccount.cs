@@ -227,7 +227,7 @@ namespace SteamAuth
             if (confDetails == null || !confDetails.Success) return -1;
 
             Regex tradeOfferIDRegex = new Regex("<div class=\"tradeoffer\" id=\"tradeofferid_(\\d+)\" >");
-            if (!tradeOfferIDRegex.IsMatch(confDetails.HTML)) return -1;
+            if(!tradeOfferIDRegex.IsMatch(confDetails.HTML)) return -1;
             return long.Parse(tradeOfferIDRegex.Match(confDetails.HTML).Groups[1].Value);
         }
 
