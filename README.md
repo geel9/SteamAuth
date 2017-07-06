@@ -10,7 +10,7 @@ Currently, this library can:
 * Remove itself from an account
 * Fetch, accept, and deny mobile confirmations
 
-#Requirements
+# Requirements
 
 * [Newtonsoft.Json](http://www.newtonsoft.com/json)
 
@@ -21,7 +21,7 @@ To add a mobile authenticator to a user, instantiate a `UserLogin` instance whic
 
 To fetch mobile confirmations, call `SteamGuardAccount.FetchConfirmations()`. You can then call `SteamGuardAccount.AcceptConfirmation` and `SteamGuardAccount.DenyConfirmation`.
 
-#Upcoming Features
+# Upcoming Features
 In order to be feature complete, this library will:
 
 * Be better documented (feature!!)
