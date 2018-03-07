@@ -154,10 +154,12 @@ namespace SteamAuth
             List<Confirmation> ret = new List<Confirmation>();
             foreach (Match confirmation in confirmations)
             {
-                if (!ulong.TryParse(confirmation.Groups[1].Value, out ulong confID)  ||
+                if (confirmation.Groups.Count != 5) continue;
+
+                if (!ulong.TryParse(confirmation.Groups[1].Value, out ulong confID) ||
                     !ulong.TryParse(confirmation.Groups[2].Value, out ulong confKey) ||
-                    !int.TryParse(confirmation.Groups[3].Value, out int confType)    ||
-                    !ulong.TryParse(confirmation.Groups[2].Value, out ulong confCreator))
+                    !int.TryParse(confirmation.Groups[3].Value, out int confType) ||
+                    !ulong.TryParse(confirmation.Groups[4].Value, out ulong confCreator))
                 {
                     continue;
                 }
@@ -199,10 +201,12 @@ namespace SteamAuth
             List<Confirmation> ret = new List<Confirmation>();
             foreach (Match confirmation in confirmations)
             {
+                if (confirmation.Groups.Count != 5) continue;
+
                 if (!ulong.TryParse(confirmation.Groups[1].Value, out ulong confID) ||
                     !ulong.TryParse(confirmation.Groups[2].Value, out ulong confKey) ||
                     !int.TryParse(confirmation.Groups[3].Value, out int confType) ||
-                    !ulong.TryParse(confirmation.Groups[2].Value, out ulong confCreator))
+                    !ulong.TryParse(confirmation.Groups[4].Value, out ulong confCreator))
                 {
                     continue;
                 }
