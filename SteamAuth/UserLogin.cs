@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 namespace SteamAuth
 {
@@ -57,6 +58,7 @@ namespace SteamAuth
                 SteamWeb.MobileLoginRequest("https://steamcommunity.com/login?oauth_client_id=DE45CD61&oauth_scope=read_profile%20write_profile%20read_client%20write_client", "GET", null, cookies, headers);
             }
 
+            postData.Add("donotcache", (TimeAligner.GetSteamTime() * 1000).ToString());
             postData.Add("username", this.Username);
             response = SteamWeb.MobileLoginRequest(APIEndpoints.COMMUNITY_BASE + "/login/getrsakey", "POST", postData, cookies);
             if (response == null || response.Contains("<BODY>\nAn error occurred while processing your request.")) return LoginResult.GeneralFailure;
@@ -67,6 +69,8 @@ namespace SteamAuth
             {
                 return LoginResult.BadRSA;
             }
+
+            Thread.Sleep(350); //Sleep for a bit to give Steam a chance to catch up??
 
             RNGCryptoServiceProvider secureRandom = new RNGCryptoServiceProvider();
             byte[] encryptedPasswordBytes;
@@ -83,23 +87,22 @@ namespace SteamAuth
             string encryptedPassword = Convert.ToBase64String(encryptedPasswordBytes);
 
             postData.Clear();
-            postData.Add("username", this.Username);
-            postData.Add("password", encryptedPassword);
+            postData.Add("donotcache", (TimeAligner.GetSteamTime() * 1000).ToString());
 
+            postData.Add("password", encryptedPassword);
+            postData.Add("username", this.Username);
             postData.Add("twofactorcode", this.TwoFactorCode ?? "");
 
+            postData.Add("emailauth", this.RequiresEmail ? this.EmailCode : "");
+            postData.Add("loginfriendlyname", "");
             postData.Add("captchagid", this.RequiresCaptcha ? this.CaptchaGID : "-1");
             postData.Add("captcha_text", this.RequiresCaptcha ? this.CaptchaText : "");
-
             postData.Add("emailsteamid", (this.Requires2FA || this.RequiresEmail) ? this.SteamID.ToString() : "");
-            postData.Add("emailauth", this.RequiresEmail ? this.EmailCode : "");
 
             postData.Add("rsatimestamp", rsaResponse.Timestamp);
-            postData.Add("remember_login", "false");
+            postData.Add("remember_login", "true");
             postData.Add("oauth_client_id", "DE45CD61");
             postData.Add("oauth_scope", "read_profile write_profile read_client write_client");
-            postData.Add("loginfriendlyname", "#login_emailauth_friendlyname_mobile");
-            postData.Add("donotcache", Util.GetSystemUnixTime().ToString());
 
             response = SteamWeb.MobileLoginRequest(APIEndpoints.COMMUNITY_BASE + "/login/dologin", "POST", postData, cookies);
             if (response == null) return LoginResult.GeneralFailure;
