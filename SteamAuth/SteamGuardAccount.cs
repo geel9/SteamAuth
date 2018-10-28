@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.IO;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -75,6 +76,27 @@ namespace SteamAuth
             {
                 return false;
             }
+        }
+
+        public void SerializeToFile(string fileName)
+        {
+            var serialized = Serialize();
+            File.WriteAllText(fileName, serialized);
+        }
+
+        public string Serialize()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+
+        public static SteamGuardAccount DeSerialize(string serialized)
+        {
+            return JsonConvert.DeserializeObject<SteamGuardAccount>(serialized);
+        }
+
+        public static SteamGuardAccount DeSerializeFromFile(string fileName)
+        {
+            return JsonConvert.DeserializeObject<SteamGuardAccount>(File.ReadAllText(fileName));
         }
 
         public string GenerateSteamGuardCode()
