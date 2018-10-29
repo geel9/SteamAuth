@@ -2,15 +2,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
-    <Version>2.0.0-dev0004</Version>
-    <Company>SteamAuth Contributors</Company>
-    <Description>A C# library that provides vital Steam Mobile Authenticator functionality</Description>
-    <Authors>SteamAuth Contributors</Authors>
+    <Version>2.0.0.2</Version>
+    <Company>SteamAuth Contributors, Soroush Falahati (falahati.net)</Company>
+    <Description>A C# library that provides vital Steam Mobile Authenticator functionalities</Description>
+    <Authors>SteamAuth Contributors, Soroush Falahati</Authors>
     <Copyright>Copyright © SteamAuth Contributors 2018</Copyright>
     <Platforms>AnyCPU</Platforms>
     <Product>Steam Authenticator</Product>
-    <PackageProjectUrl>https://github.com/geel9/SteamAuth</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/geel9/SteamAuth/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/falahati/SteamAuth</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/falahati/SteamAuth/blob/master/LICENSE</PackageLicenseUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <IncludeSource>true</IncludeSource>
     <PlatformTarget>AnyCPU</PlatformTarget>

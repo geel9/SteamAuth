@@ -1,69 +1,45 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
+using SteamAuth.Constants;
 
 namespace SteamAuth
 {
+    /// <summary>
+    ///     Represents a confirmation request waiting to be responded
+    /// </summary>
     public class Confirmation
     {
-        /// <summary>
-        /// The ID of this confirmation
-        /// </summary>
-        public ulong ID;
-
-        /// <summary>
-        /// The unique key used to act upon this confirmation.
-        /// </summary>
-        public ulong Key;
-
-        /// <summary>
-        /// The value of the data-type HTML attribute returned for this contribution.
-        /// </summary>
-        public int IntType;
-
-        /// <summary>
-        /// Represents either the Trade Offer ID or market transaction ID that caused this confirmation to be created.
-        /// </summary>
-        public ulong Creator;
-
-        /// <summary>
-        /// The type of this confirmation.
-        /// </summary>
-        public ConfirmationType ConfType;
-        
-        public Confirmation(ulong id, ulong key, int type, ulong creator)
+        // ReSharper disable once TooManyDependencies
+        [JsonConstructor]
+        public Confirmation(ulong id, ulong key, ConfirmationType type, ulong creator)
         {
-            this.ID = id;
-            this.Key = key;
-            this.IntType = type;
-            this.Creator = creator;
+            Id = id;
+            Key = key;
+            Creator = creator;
 
-            //Do a switch simply because we're not 100% certain of all the possible types.
-            switch (type)
-            {
-                case 1:
-                    this.ConfType = ConfirmationType.GenericConfirmation;
-                    break;
-                case 2:
-                    this.ConfType = ConfirmationType.Trade;
-                    break;
-                case 3:
-                    this.ConfType = ConfirmationType.MarketSellTransaction;
-                    break;
-                default:
-                    this.ConfType = ConfirmationType.Unknown;
-                    break;
-            }
+            // Doesn't matter if we are not sure about all confirmation types. 
+            // Probably so as the library user. And it is always possible to convert to int.
+            Type = type;
         }
 
-        public enum ConfirmationType
-        {
-            GenericConfirmation,
-            Trade,
-            MarketSellTransaction,
-            Unknown
-        }
+        /// <summary>
+        ///     Gets the an identification number either the Trade Offer or market transaction that caused this confirmation to be
+        ///     created.
+        /// </summary>
+        public ulong Creator { get; }
+
+        /// <summary>
+        ///     Gets the identification number of this confirmation.
+        /// </summary>
+        public ulong Id { get; }
+
+        /// <summary>
+        ///     Gets the unique key used to act upon this confirmation.
+        /// </summary>
+        public ulong Key { get; }
+
+        /// <summary>
+        ///     Gets the type of this confirmation.
+        /// </summary>
+        public ConfirmationType Type { get; }
     }
 }
