@@ -109,9 +109,13 @@ namespace SteamAuth
 
             var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(response);
 
-            if (loginResponse.Message != null && loginResponse.Message.Contains("Incorrect login"))
+            if (loginResponse.Message != null)
             {
-                return LoginResult.BadCredentials;
+                if(loginResponse.Message.Contains("There have been too many login failures"))
+                    return LoginResult.TooManyFailedLogins;
+
+                if(loginResponse.Message.Contains("Incorrect login"))
+                    return LoginResult.BadCredentials;
             }
 
             if (loginResponse.CaptchaNeeded)
@@ -132,11 +136,6 @@ namespace SteamAuth
             {
                 this.Requires2FA = true;
                 return LoginResult.Need2FA;
-            }
-
-            if (loginResponse.Message != null && loginResponse.Message.Contains("too many login failures"))
-            {
-                return LoginResult.TooManyFailedLogins;
             }
 
             if (loginResponse.OAuthData == null || loginResponse.OAuthData.OAuthToken == null || loginResponse.OAuthData.OAuthToken.Length == 0)
