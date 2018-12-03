@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -139,32 +139,48 @@ namespace SteamAuth
 
             Regex confRegex = new Regex("<div class=\"mobileconf_list_entry\" id=\"conf[0-9]+\" data-confid=\"(\\d+)\" data-key=\"(\\d+)\" data-type=\"(\\d+)\" data-creator=\"(\\d+)\"");
 
-            if (response == null || !confRegex.IsMatch(response))
-            {
-                if (response == null || !response.Contains("<div>Nothing to confirm</div>"))
-                {
-                    throw new WGTokenInvalidException();
-                }
-
+            if (response == null || !confRegex.IsMatch(response)) {
+                if (response == null || !response.Contains("<div>Nothing to confirm</div>")) {  throw new WGTokenInvalidException(); }
                 return new Confirmation[0];
             }
 
             MatchCollection confirmations = confRegex.Matches(response);
 
+            // split Confirmations HTML by: <div class="mobileconf_list_entry"
+            string[] HTML_Confirmations_arr = response.Split(new string[] { "<div class=\"mobileconf_list_entry\" " }, StringSplitOptions.None);
+
             List<Confirmation> ret = new List<Confirmation>();
+            int i = 1; // index 0 is html head > skip it
             foreach (Match confirmation in confirmations)
             {
                 if (confirmation.Groups.Count != 5) continue;
 
-                if (!ulong.TryParse(confirmation.Groups[1].Value, out ulong confID) ||
-                    !ulong.TryParse(confirmation.Groups[2].Value, out ulong confKey) ||
-                    !int.TryParse(confirmation.Groups[3].Value, out int confType) ||
-                    !ulong.TryParse(confirmation.Groups[4].Value, out ulong confCreator))
+                string confAllData = "";
+                //confAllData = response; // for debug only
+
+                string confOtherUserName = "";
+                if (HTML_Confirmations_arr[i].Contains("<div>Trade <span")){
+                    // EXTRACT FROM:   <div>Trade <span style="color: #D2D2D2">Spectrum 2 Case Key</span> to Cool_User</div>
+                    // MULTIPLE ITEMS: <div>Trade <span style="color: #D2D2D2">Spectrum 2 Case Key</span>, ... to ANGEL ★ [⇄][⚡]</div>
+                    confOtherUserName = get_text_Between(HTML_Confirmations_arr[i], "<div>Trade <span", "div>");
+                    confOtherUserName = get_text_Between(confOtherUserName, " to ", "</");
+                }
+                else if (HTML_Confirmations_arr[i].Contains("<div>Sell - ")){ // EXTRACT FROM: <div>Sell - Item Name</div>
+                    confOtherUserName = get_text_Between(HTML_Confirmations_arr[i], "<div>Sell - ", "</div>");
+                }
+
+                ulong confID; ulong confKey; int confType; ulong confCreator;
+
+                if (!ulong.TryParse(confirmation.Groups[1].Value, out confID) ||
+                    !ulong.TryParse(confirmation.Groups[2].Value, out confKey) ||
+                    !int.TryParse(confirmation.Groups[3].Value, out confType) ||
+                    !ulong.TryParse(confirmation.Groups[4].Value, out confCreator))
                 {
                     continue;
                 }
 
-                ret.Add(new Confirmation(confID, confKey, confType, confCreator));
+                ret.Add(new Confirmation(confID, confKey, confType, confCreator, confOtherUserName, confAllData));
+                i++;
             }
 
             return ret.ToArray();
@@ -186,37 +202,66 @@ namespace SteamAuth
 
             Regex confRegex = new Regex("<div class=\"mobileconf_list_entry\" id=\"conf[0-9]+\" data-confid=\"(\\d+)\" data-key=\"(\\d+)\" data-type=\"(\\d+)\" data-creator=\"(\\d+)\"");
 
-            if (response == null || !confRegex.IsMatch(response))
-            {
-                if (response == null || !response.Contains("<div>Nothing to confirm</div>"))
-                {
-                    throw new WGTokenInvalidException();
-                }
-
+            if (response == null || !confRegex.IsMatch(response)){
+                if (response == null || !response.Contains("<div>Nothing to confirm</div>")) { throw new WGTokenInvalidException();  }
                 return new Confirmation[0];
             }
 
             MatchCollection confirmations = confRegex.Matches(response);
 
+            // split Confirmations HTML by: <div class="mobileconf_list_entry"
+            string[] HTML_Confirmations_arr = response.Split(new string[] { "<div class=\"mobileconf_list_entry\" " }, StringSplitOptions.None);
+
             List<Confirmation> ret = new List<Confirmation>();
+            int i = 1; // index 0 is html head > skip it
             foreach (Match confirmation in confirmations)
             {
                 if (confirmation.Groups.Count != 5) continue;
 
-                if (!ulong.TryParse(confirmation.Groups[1].Value, out ulong confID) ||
-                    !ulong.TryParse(confirmation.Groups[2].Value, out ulong confKey) ||
-                    !int.TryParse(confirmation.Groups[3].Value, out int confType) ||
-                    !ulong.TryParse(confirmation.Groups[4].Value, out ulong confCreator))
+                string confAllData = "";
+                //confAllData = response; // for debug only
+
+                string confOtherUserName = "";
+                if (HTML_Confirmations_arr[i].Contains("<div>Trade <span")){
+                    // EXTRACT FROM:   <div>Trade <span style="color: #D2D2D2">Spectrum 2 Case Key</span> to Cool_User</div>
+                    // MULTIPLE ITEMS: <div>Trade <span style="color: #D2D2D2">Spectrum 2 Case Key</span>, ... to ANGEL ★ [⇄][⚡]</div>
+                    confOtherUserName = get_text_Between(HTML_Confirmations_arr[i], "<div>Trade <span", "div>");
+                    confOtherUserName = get_text_Between(confOtherUserName, " to ", "</");
+                }
+                else if (HTML_Confirmations_arr[i].Contains("<div>Sell - ")){ // EXTRACT FROM: <div>Sell - Item Name</div>
+                    confOtherUserName = get_text_Between(HTML_Confirmations_arr[i], "<div>Sell - ", "</div>");
+                }
+
+                ulong confID; ulong confKey; int confType; ulong confCreator;
+                
+                if (!ulong.TryParse(confirmation.Groups[1].Value, out confID) ||
+                    !ulong.TryParse(confirmation.Groups[2].Value, out confKey) ||
+                    !int.TryParse(confirmation.Groups[3].Value, out confType) ||
+                    !ulong.TryParse(confirmation.Groups[4].Value, out confCreator))
                 {
                     continue;
                 }
 
-                ret.Add(new Confirmation(confID, confKey, confType, confCreator));
+                ret.Add(new Confirmation(confID, confKey, confType, confCreator, confOtherUserName, confAllData));
+                i++;
             }
 
             return ret.ToArray();
         }
-
+        public static string get_text_Between(string strSource, string strStart, string strEnd)
+        {
+            int Start, End;
+            if (strSource.Contains(strStart) && strSource.Contains(strEnd))
+            {
+                Start = strSource.IndexOf(strStart, 0) + strStart.Length;
+                End = strSource.IndexOf(strEnd, Start);
+                return strSource.Substring(Start, End - Start);
+            }
+            else
+            {
+                return "";
+            }
+        }
         /// <summary>
         /// Deprecated. Simply returns conf.Creator.
         /// </summary>

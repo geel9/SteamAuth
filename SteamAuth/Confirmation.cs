@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -32,13 +32,18 @@ namespace SteamAuth
         /// The type of this confirmation.
         /// </summary>
         public ConfirmationType ConfType;
-        
-        public Confirmation(ulong id, ulong key, int type, ulong creator)
+
+        public string OtherUserName;
+        public string AllData;
+
+        public Confirmation(ulong id, ulong key, int type, ulong creator, string oth_user_name, string all_data)
         {
             this.ID = id;
             this.Key = key;
             this.IntType = type;
             this.Creator = creator;
+            this.OtherUserName = oth_user_name;
+            this.AllData = all_data;
 
             //Do a switch simply because we're not 100% certain of all the possible types.
             switch (type)
