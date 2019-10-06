@@ -34,6 +34,7 @@ namespace SteamAuth
 
         private SessionData _session;
         private CookieContainer _cookies;
+		private bool confirmationEmailSent = false;
 
         public AuthenticatorLinker(SessionData session)
         {
@@ -52,12 +53,17 @@ namespace SteamAuth
             if (!hasPhone && PhoneNumber == null)
                 return LinkResult.MustProvidePhoneNumber;
 
-            if (!hasPhone)
-            {
-                if (!_addPhoneNumber())
-                {
+			if (!hasPhone) {
+				if (confirmationEmailSent) {
+					if (!_checkEmailConfirmation()) {
                     return LinkResult.GeneralFailure;
                 }
+				} else if (!_addPhoneNumber()) {
+					return LinkResult.GeneralFailure;
+				} else {
+					confirmationEmailSent = true;
+					return LinkResult.MustConfirmEmail;
+				}
             }
 
             var postData = new NameValueCollection();
@@ -191,8 +197,20 @@ namespace SteamAuth
             return addPhoneNumberResponse.Success;
         }
 
-        private bool _hasPhoneAttached()
-        {
+        private bool _checkEmailConfirmation() {
+            var postData = new NameValueCollection();
+            postData.Add("op", "email_confirmation");
+            postData.Add("arg", "");
+            postData.Add("sessionid", _session.SessionID);
+
+            string response = SteamWeb.Request(APIEndpoints.COMMUNITY_BASE + "/steamguard/phoneajax", "POST", postData, _cookies);
+            if (response == null) return false;
+
+            var emailConfirmationResponse = JsonConvert.DeserializeObject<AddPhoneResponse>(response);
+             return emailConfirmationResponse.Success;
+        }
+
+        private bool _hasPhoneAttached() {
             var postData = new NameValueCollection();
             postData.Add("op", "has_phone");
             postData.Add("arg", "null");
@@ -209,6 +227,7 @@ namespace SteamAuth
         {
             MustProvidePhoneNumber, //No phone number on the account
             MustRemovePhoneNumber, //A phone number is already on the account
+            MustConfirmEmail, //User need to click link from confirmation email
             AwaitingFinalization, //Must provide an SMS code
             GeneralFailure, //General failure (really now!)
             AuthenticatorPresent
