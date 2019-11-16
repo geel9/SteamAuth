@@ -34,7 +34,7 @@ namespace SteamAuth
 
         private SessionData _session;
         private CookieContainer _cookies;
-		private bool confirmationEmailSent = false;
+        private bool confirmationEmailSent = false;
 
         public AuthenticatorLinker(SessionData session)
         {
@@ -53,17 +53,17 @@ namespace SteamAuth
             if (!hasPhone && PhoneNumber == null)
                 return LinkResult.MustProvidePhoneNumber;
 
-			if (!hasPhone) {
-				if (confirmationEmailSent) {
-					if (!_checkEmailConfirmation()) {
+            if (!hasPhone) {
+                if (confirmationEmailSent) {
+                    if (!_checkEmailConfirmation()) {
                     return LinkResult.GeneralFailure;
                 }
-				} else if (!_addPhoneNumber()) {
-					return LinkResult.GeneralFailure;
-				} else {
-					confirmationEmailSent = true;
-					return LinkResult.MustConfirmEmail;
-				}
+                } else if (!_addPhoneNumber()) {
+                    return LinkResult.GeneralFailure;
+                } else {
+                    confirmationEmailSent = true;
+                    return LinkResult.MustConfirmEmail;
+                }
             }
 
             var postData = new NameValueCollection();
