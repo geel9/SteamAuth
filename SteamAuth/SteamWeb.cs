@@ -116,7 +116,7 @@ namespace SteamAuth
                 request.ContentLength = query.Length;
 
                 StreamWriter requestStream = new StreamWriter(request.GetRequestStream());
-                requestStream.Write(query);
+                await requestStream.WriteAsync(query);
                 requestStream.Close();
             }
 
@@ -132,7 +132,7 @@ namespace SteamAuth
 
                 using (StreamReader responseStream = new StreamReader(response.GetResponseStream()))
                 {
-                    string responseData = responseStream.ReadToEnd();
+                    string responseData = await responseStream.ReadToEndAsync();
                     return responseData;
                 }
             }
