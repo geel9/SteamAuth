@@ -156,10 +156,12 @@ namespace SteamAuth
             {
                 if (confirmation.Groups.Count != 5) continue;
 
-                if (!ulong.TryParse(confirmation.Groups[1].Value, out ulong confID) ||
-                    !ulong.TryParse(confirmation.Groups[2].Value, out ulong confKey) ||
-                    !int.TryParse(confirmation.Groups[3].Value, out int confType) ||
-                    !ulong.TryParse(confirmation.Groups[4].Value, out ulong confCreator))
+                ulong confID, confKey, confCreator;
+                int confType;
+                if (!ulong.TryParse(confirmation.Groups[1].Value, out confID) ||
+                    !ulong.TryParse(confirmation.Groups[2].Value, out confKey) ||
+                    !int.TryParse(confirmation.Groups[3].Value, out confType) ||
+                    !ulong.TryParse(confirmation.Groups[4].Value, out confCreator))
                 {
                     continue;
                 }
@@ -203,10 +205,12 @@ namespace SteamAuth
             {
                 if (confirmation.Groups.Count != 5) continue;
 
-                if (!ulong.TryParse(confirmation.Groups[1].Value, out ulong confID) ||
-                    !ulong.TryParse(confirmation.Groups[2].Value, out ulong confKey) ||
-                    !int.TryParse(confirmation.Groups[3].Value, out int confType) ||
-                    !ulong.TryParse(confirmation.Groups[4].Value, out ulong confCreator))
+                ulong confID, confKey, confCreator;
+                int confType;
+                if (!ulong.TryParse(confirmation.Groups[1].Value, out confID) ||
+                    !ulong.TryParse(confirmation.Groups[2].Value, out confKey) ||
+                    !int.TryParse(confirmation.Groups[3].Value, out confType) ||
+                    !ulong.TryParse(confirmation.Groups[4].Value, out confCreator))
                 {
                     continue;
                 }
