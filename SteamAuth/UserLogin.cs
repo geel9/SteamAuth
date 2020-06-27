@@ -134,7 +134,14 @@ namespace SteamAuth
 
             if (loginResponse.TwoFactorNeeded && !loginResponse.Success)
             {
+                var readableCookies = cookies.GetCookies(new Uri("https://steamcommunity.com"));
+
                 this.Requires2FA = true;
+                SessionData session = new SessionData();
+                session.SteamID = ulong.Parse(readableCookies["SteamLoginSecure"].Value.Split('%')[0]);
+                session.SteamLoginSecure = readableCookies["SteamLoginSecure"].Value;
+                session.SessionID = readableCookies["sessionid"].Value;
+                this.Session = session;
                 return LoginResult.Need2FA;
             }
 
