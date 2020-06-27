@@ -45,6 +45,58 @@ namespace SteamAuth
             session.AddCookies(_cookies);
         }
 
+        public LinkResult MoveAuthenticator() {
+			NameValueCollection postData = new NameValueCollection();
+			postData.Add("donotcache", (TimeAligner.GetSteamTime() * 1000).ToString());
+
+			string response = SteamWeb.Request(APIEndpoints.COMMUNITY_BASE + "/login/getresetoptions/", "POST", postData, _cookies);
+			if (response == null) {
+				return LinkResult.GeneralFailure;
+			}
+
+			ResetOptions resetOptions = JsonConvert.DeserializeObject<ResetOptions>(response);
+
+			if (resetOptions.Success && resetOptions.options.sms.Allowed) {
+				postData.Set("donotcache", (TimeAligner.GetSteamTime() * 1000).ToString());
+
+				response = SteamWeb.Request(APIEndpoints.COMMUNITY_BASE + "/login/startremovetwofactor/", "POST", postData, _cookies);
+				if (response == null) {
+					return LinkResult.GeneralFailure;
+				}
+
+				AddPhoneResponse startRemoveResponse = JsonConvert.DeserializeObject<AddPhoneResponse>(response);
+				if (startRemoveResponse.Success) {
+					return LinkResult.AwaitingFinalization;
+				}
+			}
+            return LinkResult.GeneralFailure;
+		}
+
+        public FinalizeResult FinalizeMoveAuthenticator(string smsCode) {
+			NameValueCollection postData = new NameValueCollection();
+            postData.Add("donotcache", (TimeAligner.GetSteamTime() * 1000).ToString());
+            postData.Add("reset", "1");
+            postData.Add("smscode", smsCode);
+            string response = SteamWeb.Request(APIEndpoints.COMMUNITY_BASE + "/login/removetwofactor/", "POST", postData, _cookies);
+            if (response == null) {
+				return FinalizeResult.GeneralFailure;
+			}
+
+			MoveResponse moveResponse = JsonConvert.DeserializeObject<MoveResponse>(response);
+            if (moveResponse.Success == false) {
+                return FinalizeResult.GeneralFailure;
+            }
+            byte[] decodedResponse = System.Convert.FromBase64String(moveResponse.ReplacementToken);
+            string decodedString = System.Text.Encoding.UTF8.GetString(decodedResponse);
+
+            LinkedAccount = JsonConvert.DeserializeObject<SteamGuardAccount>(decodedString);
+            LinkedAccount.Status = 1; //for compatibility
+            LinkedAccount.Session = _session;
+            LinkedAccount.DeviceID = DeviceID;
+            LinkedAccount.FullyEnrolled = true;
+            return FinalizeResult.Success;
+        }
+
         public LinkResult AddAuthenticator()
         {
             bool hasPhone = _hasPhoneAttached();
@@ -268,8 +320,34 @@ namespace SteamAuth
             }
         }
 
-        private class HasPhoneResponse
-        {
+        private class ResetOptions {
+            [JsonProperty("success")]
+            public bool Success { get; set; }
+            [JsonProperty("options")]
+            public Options options;
+            public sealed class Options {
+                [JsonProperty("sms")]
+                public Sms sms;
+            }
+
+            public sealed class Sms {
+                [JsonProperty("allowed")]
+                public bool Allowed { get; set; }
+                [JsonProperty("last_digits")]
+                public string LastDigits { get; set; }
+            }
+        }
+
+        private class MoveResponse {
+            [JsonProperty("success")]
+            public bool Success { get; set; }
+
+
+            [JsonProperty("replacement_token")]
+            public string ReplacementToken { get; set; }
+        }
+
+        private class HasPhoneResponse {
             [JsonProperty("has_phone")]
             public bool HasPhone { get; set; }
         }
