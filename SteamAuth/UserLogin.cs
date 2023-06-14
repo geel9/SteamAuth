@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Net;
 using System.Security.Cryptography;
@@ -105,6 +106,7 @@ namespace SteamAuth
             postData.Add("oauth_scope", "read_profile write_profile read_client write_client");
 
             response = SteamWeb.MobileLoginRequest(APIEndpoints.COMMUNITY_BASE + "/login/dologin", "POST", postData, cookies);
+
             if (response == null) return LoginResult.GeneralFailure;
 
             var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(response);
@@ -138,26 +140,19 @@ namespace SteamAuth
                 return LoginResult.Need2FA;
             }
 
-            if (loginResponse.OAuthData == null || loginResponse.OAuthData.OAuthToken == null || loginResponse.OAuthData.OAuthToken.Length == 0)
-            {
-                return LoginResult.GeneralFailure;
-            }
-
             if (!loginResponse.LoginComplete)
             {
                 return LoginResult.BadCredentials;
             }
             else
             {
-                var readableCookies = cookies.GetCookies(new Uri("https://steamcommunity.com"));
-                var oAuthData = loginResponse.OAuthData;
+                var readableCookies = cookies.GetCookies(new Uri(APIEndpoints.COMMUNITY_BASE));
 
                 SessionData session = new SessionData();
-                session.OAuthToken = oAuthData.OAuthToken;
-                session.SteamID = oAuthData.SteamID;
-                session.SteamLogin = session.SteamID + "%7C%7C" + oAuthData.SteamLogin;
-                session.SteamLoginSecure = session.SteamID + "%7C%7C" + oAuthData.SteamLoginSecure;
-                session.WebCookie = oAuthData.Webcookie;
+                session.SteamID = ulong.Parse(loginResponse.TransferParameters.Steamid);
+                session.SteamLogin = readableCookies["steamRememberLogin"].Value;
+                session.SteamLoginSecure = readableCookies["steamLoginSecure"].Value;
+                session.WebCookie = loginResponse.TransferParameters.Webcookie;
                 session.SessionID = readableCookies["sessionid"].Value;
                 this.Session = session;
                 this.LoggedIn = true;
@@ -169,56 +164,51 @@ namespace SteamAuth
         {
             [JsonProperty("success")]
             public bool Success { get; set; }
-
-            [JsonProperty("login_complete")]
-            public bool LoginComplete { get; set; }
-
-            [JsonProperty("oauth")]
-            public string OAuthDataString { get; set; }
-
-            public OAuth OAuthData
-            {
-                get
-                {
-                    return OAuthDataString != null ? JsonConvert.DeserializeObject<OAuth>(OAuthDataString) : null;
-                }
-            }
-
+            
+            [JsonProperty("message")]
+            public string Message { get; set; }
+            
             [JsonProperty("captcha_needed")]
             public bool CaptchaNeeded { get; set; }
-
+            
             [JsonProperty("captcha_gid")]
             public string CaptchaGID { get; set; }
 
             [JsonProperty("emailsteamid")]
             public ulong EmailSteamID { get; set; }
-
+            
             [JsonProperty("emailauth_needed")]
             public bool EmailAuthNeeded { get; set; }
 
             [JsonProperty("requires_twofactor")]
             public bool TwoFactorNeeded { get; set; }
 
-            [JsonProperty("message")]
-            public string Message { get; set; }
+            [JsonProperty("login_complete")]
+            public bool LoginComplete { get; set; }
 
-            internal class OAuth
-            {
-                [JsonProperty("steamid")]
-                public ulong SteamID { get; set; }
+            [JsonProperty("transfer_urls")]
+            public List<string> TransferUrls { get; set; }
 
-                [JsonProperty("oauth_token")]
-                public string OAuthToken { get; set; }
-                
-                [JsonProperty("wgtoken")]
-                public string SteamLogin { get; set; }
+            [JsonProperty("transfer_parameters")]
+            public TransferParameters TransferParameters { get; set; }
+        }
 
-                [JsonProperty("wgtoken_secure")]
-                public string SteamLoginSecure { get; set; }
+        public class TransferParameters
+        {
+            [JsonProperty("steamid")]
+            public string Steamid { get; set; }
 
-                [JsonProperty("webcookie")]
-                public string Webcookie { get; set; }
-            }
+            [JsonProperty("token_secure")]
+            public string TokenSecure { get; set; }
+
+            [JsonProperty("auth")]
+            public string Auth { get; set; }
+
+            [JsonProperty("remember_login")]
+            public bool RememberLogin { get; set; }
+
+            [JsonProperty("webcookie")]
+            public string Webcookie { get; set; }
         }
 
         private class RSAResponse
