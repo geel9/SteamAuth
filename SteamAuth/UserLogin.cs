@@ -111,10 +111,10 @@ namespace SteamAuth
 
             if (loginResponse.Message != null)
             {
-                if(loginResponse.Message.Contains("There have been too many login failures"))
+                if (loginResponse.Message.Contains("There have been too many login failures"))
                     return LoginResult.TooManyFailedLogins;
 
-                if(loginResponse.Message.Contains("Incorrect login"))
+                if (loginResponse.Message.Contains("Incorrect login"))
                     return LoginResult.BadCredentials;
             }
 
@@ -138,11 +138,6 @@ namespace SteamAuth
                 return LoginResult.Need2FA;
             }
 
-            if (loginResponse.OAuthData == null || loginResponse.OAuthData.OAuthToken == null || loginResponse.OAuthData.OAuthToken.Length == 0)
-            {
-                return LoginResult.GeneralFailure;
-            }
-
             if (!loginResponse.LoginComplete)
             {
                 return LoginResult.BadCredentials;
@@ -150,12 +145,11 @@ namespace SteamAuth
             else
             {
                 var readableCookies = cookies.GetCookies(new Uri("https://steamcommunity.com"));
-                var oAuthData = loginResponse.OAuthData;
+                var oAuthData = loginResponse.TransferParameters;
 
                 SessionData session = new SessionData();
-                session.OAuthToken = oAuthData.OAuthToken;
                 session.SteamID = oAuthData.SteamID;
-                session.SteamLogin = session.SteamID + "%7C%7C" + oAuthData.SteamLogin;
+                session.SteamLogin = session.SteamID + "%7C%7C" + oAuthData.SteamLoginSecure;
                 session.SteamLoginSecure = session.SteamID + "%7C%7C" + oAuthData.SteamLoginSecure;
                 session.WebCookie = oAuthData.Webcookie;
                 session.SessionID = readableCookies["sessionid"].Value;
@@ -173,16 +167,8 @@ namespace SteamAuth
             [JsonProperty("login_complete")]
             public bool LoginComplete { get; set; }
 
-            [JsonProperty("oauth")]
-            public string OAuthDataString { get; set; }
-
-            public OAuth OAuthData
-            {
-                get
-                {
-                    return OAuthDataString != null ? JsonConvert.DeserializeObject<OAuth>(OAuthDataString) : null;
-                }
-            }
+            [JsonProperty("transfer_parameters")]
+            public TransferParameters TransferParameters { get; set; }
 
             [JsonProperty("captcha_needed")]
             public bool CaptchaNeeded { get; set; }
@@ -201,24 +187,24 @@ namespace SteamAuth
 
             [JsonProperty("message")]
             public string Message { get; set; }
+        }
 
-            internal class OAuth
-            {
-                [JsonProperty("steamid")]
-                public ulong SteamID { get; set; }
+        internal class TransferParameters
+        {
+            [JsonProperty("auth")]
+            public string Auth { get; set; }
 
-                [JsonProperty("oauth_token")]
-                public string OAuthToken { get; set; }
-                
-                [JsonProperty("wgtoken")]
-                public string SteamLogin { get; set; }
+            [JsonProperty("remember_login")]
+            public bool RememberLogin { get; set; }
 
-                [JsonProperty("wgtoken_secure")]
-                public string SteamLoginSecure { get; set; }
+            [JsonProperty("steamid")]
+            public ulong SteamID { get; set; }
 
-                [JsonProperty("webcookie")]
-                public string Webcookie { get; set; }
-            }
+            [JsonProperty("token_secure")]
+            public string SteamLoginSecure { get; set; }
+
+            [JsonProperty("webcookie")]
+            public string Webcookie { get; set; }
         }
 
         private class RSAResponse

@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 
 namespace SteamAuth
 {
@@ -6,6 +7,7 @@ namespace SteamAuth
     {
         public string SessionID { get; set; }
 
+        [Obsolete("Steam no longer uses this cookie. Use SteamLoginSecure only")]
         public string SteamLogin { get; set; }
 
         public string SteamLoginSecure { get; set; }
@@ -20,13 +22,7 @@ namespace SteamAuth
         {
             cookies.Add(new Cookie("mobileClientVersion", "0 (2.1.3)", "/", ".steamcommunity.com"));
             cookies.Add(new Cookie("mobileClient", "android", "/", ".steamcommunity.com"));
-
             cookies.Add(new Cookie("steamid", SteamID.ToString(), "/", ".steamcommunity.com"));
-            cookies.Add(new Cookie("steamLogin", SteamLogin, "/", ".steamcommunity.com")
-            {
-                HttpOnly = true
-            });
-
             cookies.Add(new Cookie("steamLoginSecure", SteamLoginSecure, "/", ".steamcommunity.com")
             {
                 HttpOnly = true,

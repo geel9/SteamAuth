@@ -219,86 +219,16 @@ namespace SteamAuth
             return _sendConfirmationAjax(conf, "cancel");
         }
 
-        /// <summary>
-        /// Refreshes the Steam session. Necessary to perform confirmations if your session has expired or changed.
-        /// </summary>
-        /// <returns></returns>
+        [Obsolete("You must do a full login to get updated cookies now")]
         public bool RefreshSession()
         {
-            string url = APIEndpoints.MOBILEAUTH_GETWGTOKEN;
-            NameValueCollection postData = new NameValueCollection();
-            postData.Add("access_token", this.Session.OAuthToken);
-
-            string response = null;
-            try
-            {
-                response = SteamWeb.Request(url, "POST", postData);
-            }
-            catch (WebException)
-            {
-                return false;
-            }
-
-            if (response == null) return false;
-
-            try
-            {
-                var refreshResponse = JsonConvert.DeserializeObject<RefreshSessionDataResponse>(response);
-                if (refreshResponse == null || refreshResponse.Response == null || String.IsNullOrEmpty(refreshResponse.Response.Token))
-                    return false;
-
-                string token = this.Session.SteamID + "%7C%7C" + refreshResponse.Response.Token;
-                string tokenSecure = this.Session.SteamID + "%7C%7C" + refreshResponse.Response.TokenSecure;
-
-                this.Session.SteamLogin = token;
-                this.Session.SteamLoginSecure = tokenSecure;
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            return true;
         }
 
-        /// <summary>
-        /// Refreshes the Steam session. Necessary to perform confirmations if your session has expired or changed.
-        /// </summary>
-        /// <returns></returns>
+        [Obsolete("You must do a full login to get updated cookies now")]
         public async Task<bool> RefreshSessionAsync()
         {
-            string url = APIEndpoints.MOBILEAUTH_GETWGTOKEN;
-            NameValueCollection postData = new NameValueCollection();
-            postData.Add("access_token", this.Session.OAuthToken);
-
-            string response = null;
-            try
-            {
-                response = await SteamWeb.RequestAsync(url, "POST", postData);
-            }
-            catch (WebException)
-            {
-                return false;
-            }
-
-            if (response == null) return false;
-
-            try
-            {
-                var refreshResponse = JsonConvert.DeserializeObject<RefreshSessionDataResponse>(response);
-                if (refreshResponse == null || refreshResponse.Response == null || String.IsNullOrEmpty(refreshResponse.Response.Token))
-                    return false;
-
-                string token = this.Session.SteamID + "%7C%7C" + refreshResponse.Response.Token;
-                string tokenSecure = this.Session.SteamID + "%7C%7C" + refreshResponse.Response.TokenSecure;
-
-                this.Session.SteamLogin = token;
-                this.Session.SteamLoginSecure = tokenSecure;
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            return true;
         }
 
         private ConfirmationDetailsResponse _getConfirmationDetails(Confirmation conf)
@@ -448,20 +378,6 @@ namespace SteamAuth
 
         public class WGTokenExpiredException : Exception
         {
-        }
-
-        private class RefreshSessionDataResponse
-        {
-            [JsonProperty("response")]
-            public RefreshSessionDataInternalResponse Response { get; set; }
-            internal class RefreshSessionDataInternalResponse
-            {
-                [JsonProperty("token")]
-                public string Token { get; set; }
-
-                [JsonProperty("token_secure")]
-                public string TokenSecure { get; set; }
-            }
         }
 
         private class RemoveAuthenticatorResponse
