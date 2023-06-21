@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -147,43 +148,19 @@ namespace SteamAuth
 
         private Confirmation[] FetchConfirmationInternal(string response)
         {
+            var confirmationsResponse = JsonConvert.DeserializeObject<ConfirmationsResponse>(response);
 
-            /*So you're going to see this abomination and you're going to be upset.
-              It's understandable. But the thing is, regex for HTML -- while awful -- makes this way faster than parsing a DOM, plus we don't need another library.
-              And because the data is always in the same place and same format... It's not as if we're trying to naturally understand HTML here. Just extract strings.
-              I'm sorry. */
-
-            Regex confRegex = new Regex("<div class=\"mobileconf_list_entry\" id=\"conf[0-9]+\" data-confid=\"(\\d+)\" data-key=\"(\\d+)\" data-type=\"(\\d+)\" data-creator=\"(\\d+)\"");
-
-            if (response == null || !confRegex.IsMatch(response))
+            if (!confirmationsResponse.Success)
             {
-                if (response == null || !response.Contains("<div>Nothing to confirm</div>"))
-                {
-                    throw new WGTokenInvalidException();
-                }
-
-                return new Confirmation[0];
+                return Array.Empty<Confirmation>();
+            }
+            
+            if (confirmationsResponse.NeedAuthentication)
+            {
+                return Array.Empty<Confirmation>();
             }
 
-            MatchCollection confirmations = confRegex.Matches(response);
-
-            List<Confirmation> ret = new List<Confirmation>();
-            foreach (Match confirmation in confirmations)
-            {
-                if (confirmation.Groups.Count != 5) continue;
-
-                if (!ulong.TryParse(confirmation.Groups[1].Value, out ulong confID) ||
-                    !ulong.TryParse(confirmation.Groups[2].Value, out ulong confKey) ||
-                    !int.TryParse(confirmation.Groups[3].Value, out int confType) ||
-                    !ulong.TryParse(confirmation.Groups[4].Value, out ulong confCreator))
-                {
-                    continue;
-                }
-
-                ret.Add(new Confirmation(confID, confKey, confType, confCreator));
-            }
-
-            return ret.ToArray();
+            return confirmationsResponse.Confirmations;
         }
 
         /// <summary>
@@ -291,7 +268,7 @@ namespace SteamAuth
 
         public string GenerateConfirmationURL(string tag = "conf")
         {
-            string endpoint = APIEndpoints.COMMUNITY_BASE + "/mobileconf/conf?";
+            string endpoint = APIEndpoints.COMMUNITY_BASE + "/mobileconf/getlist?";
             string queryString = GenerateConfirmationQueryParams(tag);
             return endpoint + queryString;
         }
@@ -303,7 +280,7 @@ namespace SteamAuth
 
             var queryParams = GenerateConfirmationQueryParamsAsNVC(tag);
 
-            return "p=" + queryParams["p"] + "&a=" + queryParams["a"] + "&k=" + queryParams["k"] + "&t=" + queryParams["t"] + "&m=android&tag=" + queryParams["tag"];
+            return string.Join("&", queryParams.AllKeys.Select(key => $"{key}={queryParams[key]}"));
         }
 
         public NameValueCollection GenerateConfirmationQueryParamsAsNVC(string tag)
@@ -318,7 +295,7 @@ namespace SteamAuth
             ret.Add("a", this.Session.SteamID.ToString());
             ret.Add("k", _generateConfirmationHashForTime(time, tag));
             ret.Add("t", time.ToString());
-            ret.Add("m", "android");
+            ret.Add("m", "react");
             ret.Add("tag", tag);
 
             return ret;
