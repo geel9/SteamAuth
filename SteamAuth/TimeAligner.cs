@@ -78,7 +78,7 @@ namespace SteamAuth
                 [JsonProperty("server_time")]
                 public long ServerTime { get; set; }
             }
-            
+
         }
     }
 }
