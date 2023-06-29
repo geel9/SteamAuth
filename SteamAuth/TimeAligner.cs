@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System.Net;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace SteamAuth
 {
@@ -37,6 +38,7 @@ namespace SteamAuth
             long currentTime = Util.GetSystemUnixTime();
             using (WebClient client = new WebClient())
             {
+                client.Encoding = Encoding.UTF8;
                 try
                 {
                     string response = client.UploadString(APIEndpoints.TWO_FACTOR_TIME_QUERY, "steamid=0");
@@ -57,6 +59,7 @@ namespace SteamAuth
             WebClient client = new WebClient();
             try
             {
+                client.Encoding = Encoding.UTF8;
                 string response = await client.UploadStringTaskAsync(new Uri(APIEndpoints.TWO_FACTOR_TIME_QUERY), "steamid=0");
                 TimeQuery query = JsonConvert.DeserializeObject<TimeQuery>(response);
                 TimeAligner._timeDifference = (int)(query.Response.ServerTime - currentTime);
