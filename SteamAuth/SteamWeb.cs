@@ -15,6 +15,7 @@ namespace SteamAuth
             string response;
             using (CookieAwareWebClient wc = new CookieAwareWebClient())
             {
+                wc.Encoding = Encoding.UTF8;
                 wc.CookieContainer = cookies;
                 wc.Headers[HttpRequestHeader.UserAgent] = SteamWeb.MOBILE_APP_USER_AGENT;
                 response = await wc.DownloadStringTaskAsync(url);
@@ -30,6 +31,7 @@ namespace SteamAuth
             string response;
             using (CookieAwareWebClient wc = new CookieAwareWebClient())
             {
+                wc.Encoding = Encoding.UTF8;
                 wc.CookieContainer = cookies;
                 wc.Headers[HttpRequestHeader.UserAgent] = SteamWeb.MOBILE_APP_USER_AGENT;
                 byte[] result = await wc.UploadValuesTaskAsync(new Uri(url), "POST", body);

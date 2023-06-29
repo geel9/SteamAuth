@@ -221,6 +221,7 @@ namespace SteamAuth
             string response;
             using (CookieAwareWebClient wc = new CookieAwareWebClient())
             {
+                wc.Encoding = Encoding.UTF8;
                 wc.CookieContainer = this.Session.GetCookies();
                 wc.Headers[HttpRequestHeader.UserAgent] = SteamWeb.MOBILE_APP_USER_AGENT;
                 wc.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded; charset=UTF-8";

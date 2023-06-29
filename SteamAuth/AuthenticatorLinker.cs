@@ -156,6 +156,7 @@ namespace SteamAuth
                 string finalizeAuthenticatorResultStr;
                 using (WebClient wc = new WebClient())
                 {
+                    wc.Encoding = Encoding.UTF8;
                     wc.Headers[HttpRequestHeader.UserAgent] = SteamWeb.MOBILE_APP_USER_AGENT;
                     byte[] finalizeAuthenticatorResult = await wc.UploadValuesTaskAsync(new Uri("https://api.steampowered.com/ITwoFactorService/FinalizeAddAuthenticator/v1/?access_token=" + this.Session.AccessToken), "POST", finalizeAuthenticatorValues);
                     finalizeAuthenticatorResultStr = Encoding.UTF8.GetString(finalizeAuthenticatorResult);
