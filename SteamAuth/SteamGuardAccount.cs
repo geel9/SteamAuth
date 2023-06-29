@@ -164,7 +164,7 @@ namespace SteamAuth
         /// <returns>The Creator field of conf</returns>
         public long GetConfirmationTradeOfferID(Confirmation conf)
         {
-            if (conf.ConfType != Confirmation.ConfirmationType.Trade)
+            if (conf.ConfType != Confirmation.EMobileConfirmationType.Trade)
                 throw new ArgumentException("conf must be a trade confirmation.");
 
             return (long)conf.Creator;
