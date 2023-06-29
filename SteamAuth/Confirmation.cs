@@ -37,10 +37,10 @@ namespace SteamAuth
 
         public enum ConfirmationType
         {
+            Unknown,
             GenericConfirmation,
             Trade,
-            MarketSellTransaction,
-            Unknown
+            MarketSellTransaction
         }
     }
 
