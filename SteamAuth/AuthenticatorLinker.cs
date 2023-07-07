@@ -21,6 +21,7 @@ namespace SteamAuth
         /// Set to register a new phone number when linking. If a phone number is not set on the account, this must be set. If a phone number is set on the account, this must be null.
         /// </summary>
         public string PhoneNumber = null;
+        public string PhoneCountryCode = null;
 
         /// <summary>
         /// Randomly-generated device ID. Should only be generated once per linker.
@@ -108,8 +109,14 @@ namespace SteamAuth
                 {
                     // Add phone number
 
-                    // Get account country code
-                    string countryCode = await _getUserCountry();
+                    // Get country code
+                    string countryCode = this.PhoneCountryCode;
+
+                    // If given country code is null, use the one from the Steam account
+                    if (string.IsNullOrEmpty(countryCode))
+                    {
+                        countryCode = await getUserCountry();
+                    }
 
                     // Set the phone number
                     var res = await _setAccountPhoneNumber(this.PhoneNumber, countryCode);
@@ -200,7 +207,7 @@ namespace SteamAuth
             return FinalizeResult.GeneralFailure;
         }
 
-        private async Task<string> _getUserCountry()
+        private async Task<string> getUserCountry()
         {
             NameValueCollection getCountryBody = new NameValueCollection();
             getCountryBody.Add("steamid", this.Session.SteamID.ToString());
