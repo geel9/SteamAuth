@@ -21,7 +21,7 @@ namespace SteamAuth
             {
                 TimeAligner.AlignTime();
             }
-            return Util.GetSystemUnixTime() + _timeDifference;
+            return DateTimeOffset.UtcNow.ToUnixTimeSeconds() + _timeDifference;
         }
 
         public static async Task<long> GetSteamTimeAsync()
@@ -30,12 +30,12 @@ namespace SteamAuth
             {
                 await TimeAligner.AlignTimeAsync();
             }
-            return Util.GetSystemUnixTime() + _timeDifference;
+            return DateTimeOffset.UtcNow.ToUnixTimeSeconds() + _timeDifference;
         }
 
         public static void AlignTime()
         {
-            long currentTime = Util.GetSystemUnixTime();
+            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             using (WebClient client = new WebClient())
             {
                 client.Encoding = Encoding.UTF8;
@@ -55,7 +55,7 @@ namespace SteamAuth
 
         public static async Task AlignTimeAsync()
         {
-            long currentTime = Util.GetSystemUnixTime();
+            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             WebClient client = new WebClient();
             try
             {
