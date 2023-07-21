@@ -8,7 +8,7 @@ namespace SteamAuth
 {
     public class SteamWeb
     {
-        public static string MOBILE_APP_USER_AGENT = "okhttp/3.12.12";
+        public static string MOBILE_APP_USER_AGENT = "Dalvik/2.1.0 (Linux; U; Android 9; Valve Steam App Version/3)";
 
         public static async Task<string> GETRequest(string url, CookieContainer cookies)
         {

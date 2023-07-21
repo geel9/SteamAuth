@@ -83,10 +83,13 @@ namespace SteamAuth
                 this.SessionID = GenerateSessionID();
 
             var cookies = new CookieContainer();
-            cookies.Add(new Cookie("steamLoginSecure", this.GetSteamLoginSecure(), "/", "steamcommunity.com"));
-            cookies.Add(new Cookie("sessionid", this.SessionID, "/", "steamcommunity.com"));
-            cookies.Add(new Cookie("mobileClient", "android", "/", "steamcommunity.com"));
-            cookies.Add(new Cookie("mobileClientVersion", "777777 3.6.1", "/", "steamcommunity.com"));
+            foreach (string domain in new string[] { "steamcommunity.com", "store.steampowered.com" })
+            {
+                cookies.Add(new Cookie("steamLoginSecure", this.GetSteamLoginSecure(), "/", domain));
+                cookies.Add(new Cookie("sessionid", this.SessionID, "/", domain));
+                cookies.Add(new Cookie("mobileClient", "android", "/", domain));
+                cookies.Add(new Cookie("mobileClientVersion", "777777 3.6.4", "/", domain));
+            }
             return cookies;
         }
 
