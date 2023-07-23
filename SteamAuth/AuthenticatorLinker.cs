@@ -238,7 +238,17 @@ namespace SteamAuth
 
         private async Task<bool> _sendPhoneVerificationCode()
         {
-            await SteamWeb.POSTRequest("https://api.steampowered.com/IPhoneService/SendPhoneVerificationCode/v1?access_token=" + this.Session.AccessToken, null, null);
+            NameValueCollection Language = new NameValueCollection();
+            Language.Add("language", "6");
+
+            if (PhoneCountryCode == "86")
+            {
+                await SteamWeb.POSTRequest("https://api.steampowered.com/IPhoneService/SendPhoneVerificationCode/v1?access_token=" + this.Session.AccessToken, null, Language);
+            }
+            else
+            {
+                await SteamWeb.POSTRequest("https://api.steampowered.com/IPhoneService/SendPhoneVerificationCode/v1?access_token=" + this.Session.AccessToken, null, null);
+            }
             return true;
         }
 
