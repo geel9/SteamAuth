@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net;
 
 namespace SteamAuth
@@ -11,6 +12,7 @@ namespace SteamAuth
         protected override WebRequest GetWebRequest(Uri address)
         {
             var request = (HttpWebRequest)base.GetWebRequest(address);
+            Debug.Assert(request != null, nameof(request) + " != null");
             request.CookieContainer = CookieContainer;
             return request;
         }
@@ -18,6 +20,7 @@ namespace SteamAuth
         protected override WebResponse GetWebResponse(WebRequest request)
         {
             var response = (HttpWebResponse)base.GetWebResponse(request);
+            Debug.Assert(response != null, nameof(response) + " != null");
             this.ResponseCookies = response.Cookies;
             return response;
         }

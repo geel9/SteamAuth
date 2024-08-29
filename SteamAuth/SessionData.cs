@@ -1,22 +1,23 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace SteamAuth
 {
     public class SessionData
     {
-        public ulong SteamID { get; set; }
+        public ulong SteamId { get; set; }
 
         public string AccessToken { get; set; }
 
         public string RefreshToken { get; set; }
 
-        public string SessionID { get; set; }
+        public string SessionId { get; set; }
 
         public async Task RefreshAccessToken()
         {
@@ -31,15 +32,15 @@ namespace SteamAuth
             {
                 var postData = new NameValueCollection();
                 postData.Add("refresh_token", this.RefreshToken);
-                postData.Add("steamid", this.SteamID.ToString());
-                responseStr = await SteamWeb.POSTRequest("https://api.steampowered.com/IAuthenticationService/GenerateAccessTokenForApp/v1/", null, postData);
+                postData.Add("steamid", this.SteamId.ToString());
+                responseStr = await SteamWeb.PostRequest("https://api.steampowered.com/IAuthenticationService/GenerateAccessTokenForApp/v1/", null, postData);
             }
             catch (Exception ex)
             {
                 throw new Exception("Failed to refresh token: " + ex.Message);
             }
 
-            var response = JsonConvert.DeserializeObject<GenerateAccessTokenForAppResponse>(responseStr);
+            var response = JsonSerializer.Deserialize<GenerateAccessTokenForAppResponse>(responseStr);
             this.AccessToken = response.Response.AccessToken;
         }
 
@@ -71,22 +72,22 @@ namespace SteamAuth
             }
 
             var payloadBytes = Convert.FromBase64String(base64);
-            var jwt = JsonConvert.DeserializeObject<SteamAccessToken>(System.Text.Encoding.UTF8.GetString(payloadBytes));
+            var jwt = JsonSerializer.Deserialize<SteamAccessToken>(System.Text.Encoding.UTF8.GetString(payloadBytes));
 
             // Compare expire time of the token to the current time
-            return DateTimeOffset.UtcNow.ToUnixTimeSeconds() > jwt.exp;
+            return DateTimeOffset.UtcNow.ToUnixTimeSeconds() > jwt.Exp;
         }
 
         public CookieContainer GetCookies()
         {
-            if (this.SessionID == null)
-                this.SessionID = GenerateSessionID();
+            if (this.SessionId == null)
+                this.SessionId = GenerateSessionId();
 
             var cookies = new CookieContainer();
-            foreach (string domain in new string[] { "steamcommunity.com", "store.steampowered.com" })
+            foreach (var domain in new string[] { "steamcommunity.com", "store.steampowered.com" })
             {
                 cookies.Add(new Cookie("steamLoginSecure", this.GetSteamLoginSecure(), "/", domain));
-                cookies.Add(new Cookie("sessionid", this.SessionID, "/", domain));
+                cookies.Add(new Cookie("sessionid", this.SessionId, "/", domain));
                 cookies.Add(new Cookie("mobileClient", "android", "/", domain));
                 cookies.Add(new Cookie("mobileClientVersion", "777777 3.6.4", "/", domain));
             }
@@ -95,20 +96,20 @@ namespace SteamAuth
 
         private string GetSteamLoginSecure()
         {
-            return this.SteamID.ToString() + "%7C%7C" + this.AccessToken;
+            return this.SteamId.ToString() + "%7C%7C" + this.AccessToken;
         }
 
-        private static string GenerateSessionID()
+        private static string GenerateSessionId()
         {
             return GetRandomHexNumber(32);
         }
 
         private static string GetRandomHexNumber(int digits)
         {
-            Random random = new Random();
-            byte[] buffer = new byte[digits / 2];
+            var random = new Random();
+            var buffer = new byte[digits / 2];
             random.NextBytes(buffer);
-            string result = String.Concat(buffer.Select(x => x.ToString("X2")).ToArray());
+            var result = String.Concat(buffer.Select(x => x.ToString("X2")).ToArray());
             if (digits % 2 == 0)
                 return result;
             return result + random.Next(16).ToString("X");
@@ -116,18 +117,18 @@ namespace SteamAuth
 
         private class SteamAccessToken
         {
-            public long exp { get; set; }
+            public long Exp { get; set; }
         }
 
         private class GenerateAccessTokenForAppResponse
         {
-            [JsonProperty("response")]
+            [JsonPropertyName("response")]
             public GenerateAccessTokenForAppResponseResponse Response;
         }
 
         private class GenerateAccessTokenForAppResponseResponse
         {
-            [JsonProperty("access_token")]
+            [JsonPropertyName("access_token")]
             public string AccessToken { get; set; }
         }
     }

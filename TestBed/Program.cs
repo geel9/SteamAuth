@@ -1,6 +1,6 @@
 ﻿using System;
 using SteamAuth;
-using Newtonsoft.Json;
+using System.Text.Json;
 using System.IO;
 using SteamKit2;
 using SteamKit2.Authentication;
@@ -14,10 +14,11 @@ namespace TestBed
         static async Task Main(string[] args)
         {
             //This basic loop will log into user accounts you specify, enable the mobile authenticator, and save a maFile (mobile authenticator file)
+            var result = AuthenticatorLinker.LinkResult.GeneralFailure;
             while (true)
             {
                 // Start a new SteamClient instance
-                SteamClient steamClient = new SteamClient();
+                var steamClient = new SteamClient();
 
                 // Connect to Steam
                 steamClient.Connect();
@@ -27,10 +28,10 @@ namespace TestBed
                     await Task.Delay(500);
 
                 Console.WriteLine("Enter username: ");
-                string username = Console.ReadLine();
+                var username = Console.ReadLine();
 
                 Console.WriteLine("Enter password: ");
-                string password = Console.ReadLine();
+                var password = Console.ReadLine();
 
                 // Create a new auth session
                 CredentialsAuthSession authSession;
@@ -56,30 +57,22 @@ namespace TestBed
                 var pollResponse = await authSession.PollingWaitForResultAsync();
 
                 // Build a SessionData object
-                SessionData sessionData = new SessionData()
+                var sessionData = new SessionData()
                 {
-                    SteamID = authSession.SteamID.ConvertToUInt64(),
+                    SteamId = authSession.SteamID.ConvertToUInt64(),
                     AccessToken = pollResponse.AccessToken,
                     RefreshToken = pollResponse.RefreshToken,
                 };
 
                 // Init AuthenticatorLinker
-                AuthenticatorLinker linker = new AuthenticatorLinker(sessionData);
+                var linker = new AuthenticatorLinker(sessionData);
 
                 Console.WriteLine("If account has no phone number, enter one now: (+1 XXXXXXXXXX)");
-                string phoneNumber = Console.ReadLine();
+                var phoneNumber = Console.ReadLine();
 
-                if (string.IsNullOrWhiteSpace(phoneNumber))
-                {
-                    linker.PhoneNumber = null;
-                }
-                else
-                {
-                    linker.PhoneNumber = phoneNumber;
-                }
+                linker.PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber;
 
-                int tries = 0;
-                AuthenticatorLinker.LinkResult result = AuthenticatorLinker.LinkResult.GeneralFailure;
+                var tries = 0;
                 while (tries <= 5)
                 {
                     tries++;
@@ -116,8 +109,8 @@ namespace TestBed
                     // Write maFile
                     try
                     {
-                        string sgFile = JsonConvert.SerializeObject(linker.LinkedAccount, Formatting.Indented);
-                        string fileName = linker.LinkedAccount.AccountName + ".maFile";
+                        var sgFile = JsonSerializer.Serialize(linker.LinkedAccount, new JsonSerializerOptions { WriteIndented = true });
+                        var fileName = linker.LinkedAccount.AccountName + ".maFile";
                         File.WriteAllText(fileName, sgFile);
                         break;
                     }
@@ -135,8 +128,10 @@ namespace TestBed
                 tries = 0;
                 while (tries <= 5)
                 {
+                    tries++;
+                    
                     Console.WriteLine("Please enter SMS code: ");
-                    string smsCode = Console.ReadLine();
+                    var smsCode = Console.ReadLine();
                     var linkResult = await linker.FinalizeAddAuthenticator(smsCode);
 
                     if (linkResult != AuthenticatorLinker.FinalizeResult.Success)

@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Net;
-using Newtonsoft.Json;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SteamAuth
 {
@@ -35,14 +36,14 @@ namespace SteamAuth
 
         public static void AlignTime()
         {
-            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            using (WebClient client = new WebClient())
+            var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            using (var client = new WebClient())
             {
                 client.Encoding = Encoding.UTF8;
                 try
                 {
-                    string response = client.UploadString(APIEndpoints.TWO_FACTOR_TIME_QUERY, "steamid=0");
-                    TimeQuery query = JsonConvert.DeserializeObject<TimeQuery>(response);
+                    var response = client.UploadString(ApiEndpoints.TwoFactorTimeQuery, "steamid=0");
+                    var query = JsonSerializer.Deserialize<TimeQuery>(response);
                     TimeAligner._timeDifference = (int)(query.Response.ServerTime - currentTime);
                     TimeAligner._aligned = true;
                 }
@@ -55,13 +56,13 @@ namespace SteamAuth
 
         public static async Task AlignTimeAsync()
         {
-            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            WebClient client = new WebClient();
+            var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var client = new WebClient();
             try
             {
                 client.Encoding = Encoding.UTF8;
-                string response = await client.UploadStringTaskAsync(new Uri(APIEndpoints.TWO_FACTOR_TIME_QUERY), "steamid=0");
-                TimeQuery query = JsonConvert.DeserializeObject<TimeQuery>(response);
+                var response = await client.UploadStringTaskAsync(new Uri(ApiEndpoints.TwoFactorTimeQuery), "steamid=0");
+                var query = JsonSerializer.Deserialize<TimeQuery>(response);
                 TimeAligner._timeDifference = (int)(query.Response.ServerTime - currentTime);
                 TimeAligner._aligned = true;
             }
@@ -73,12 +74,12 @@ namespace SteamAuth
 
         internal class TimeQuery
         {
-            [JsonProperty("response")]
+            [JsonPropertyName("response")]
             internal TimeQueryResponse Response { get; set; }
 
             internal class TimeQueryResponse
             {
-                [JsonProperty("server_time")]
+                [JsonPropertyName("server_time")]
                 public long ServerTime { get; set; }
             }
 

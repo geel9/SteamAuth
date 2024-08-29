@@ -1,59 +1,58 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.String;
 
 namespace SteamAuth
 {
     public class SteamGuardAccount
     {
-        [JsonProperty("shared_secret")]
+        [JsonPropertyName("shared_secret")]
         public string SharedSecret { get; set; }
 
-        [JsonProperty("serial_number")]
+        [JsonPropertyName("serial_number")]
         public string SerialNumber { get; set; }
 
-        [JsonProperty("revocation_code")]
+        [JsonPropertyName("revocation_code")]
         public string RevocationCode { get; set; }
 
-        [JsonProperty("uri")]
-        public string URI { get; set; }
+        [JsonPropertyName("uri")]
+        public string Uri { get; set; }
 
-        [JsonProperty("server_time")]
+        [JsonPropertyName("server_time")]
         public long ServerTime { get; set; }
 
-        [JsonProperty("account_name")]
+        [JsonPropertyName("account_name")]
         public string AccountName { get; set; }
 
-        [JsonProperty("token_gid")]
-        public string TokenGID { get; set; }
+        [JsonPropertyName("token_gid")]
+        public string TokenGid { get; set; }
 
-        [JsonProperty("identity_secret")]
+        [JsonPropertyName("identity_secret")]
         public string IdentitySecret { get; set; }
 
-        [JsonProperty("secret_1")]
+        [JsonPropertyName("secret_1")]
         public string Secret1 { get; set; }
 
-        [JsonProperty("status")]
+        [JsonPropertyName("status")]
         public int Status { get; set; }
 
-        [JsonProperty("device_id")]
-        public string DeviceID { get; set; }
+        [JsonPropertyName("device_id")]
+        public string DeviceId { get; set; }
 
-        /// <summary>
-        /// Set to true if the authenticator has actually been applied to the account.
-        /// </summary>
-        [JsonProperty("fully_enrolled")]
+        [JsonPropertyName("fully_enrolled")]
         public bool FullyEnrolled { get; set; }
 
         public SessionData Session { get; set; }
 
-        private static byte[] steamGuardCodeTranslations = new byte[] { 50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89 };
+        private static readonly byte[] SteamGuardCodeTranslations = new byte[] { 50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89 };
 
         /// <summary>
         /// Remove steam guard from this account
@@ -66,10 +65,10 @@ namespace SteamAuth
             postBody.Add("revocation_code", this.RevocationCode);
             postBody.Add("revocation_reason", "1");
             postBody.Add("steamguard_scheme", scheme.ToString());
-            string response = await SteamWeb.POSTRequest("https://api.steampowered.com/ITwoFactorService/RemoveAuthenticator/v1?access_token=" + this.Session.AccessToken, null, postBody);
+            var response = await SteamWeb.PostRequest("https://api.steampowered.com/ITwoFactorService/RemoveAuthenticator/v1?access_token=" + this.Session.AccessToken, null, postBody);
 
             // Parse to object
-            var removeResponse = JsonConvert.DeserializeObject<RemoveAuthenticatorResponse>(response);
+            var removeResponse = JsonSerializer.Deserialize<RemoveAuthenticatorResponse>(response);
 
             if (removeResponse == null || removeResponse.Response == null || !removeResponse.Response.Success) return false;
             return true;
@@ -87,36 +86,36 @@ namespace SteamAuth
 
         public string GenerateSteamGuardCodeForTime(long time)
         {
-            if (this.SharedSecret == null || this.SharedSecret.Length == 0)
+            if (string.IsNullOrEmpty(this.SharedSecret))
             {
                 return "";
             }
 
-            string sharedSecretUnescaped = Regex.Unescape(this.SharedSecret);
-            byte[] sharedSecretArray = Convert.FromBase64String(sharedSecretUnescaped);
-            byte[] timeArray = new byte[8];
+            var sharedSecretUnescaped = Regex.Unescape(this.SharedSecret);
+            var sharedSecretArray = Convert.FromBase64String(sharedSecretUnescaped);
+            var timeArray = new byte[8];
 
             time /= 30L;
 
-            for (int i = 8; i > 0; i--)
+            for (var i = 8; i > 0; i--)
             {
                 timeArray[i - 1] = (byte)time;
                 time >>= 8;
             }
 
-            HMACSHA1 hmacGenerator = new HMACSHA1();
+            var hmacGenerator = new HMACSHA1();
             hmacGenerator.Key = sharedSecretArray;
-            byte[] hashedData = hmacGenerator.ComputeHash(timeArray);
-            byte[] codeArray = new byte[5];
+            var hashedData = hmacGenerator.ComputeHash(timeArray);
+            var codeArray = new byte[5];
             try
             {
-                byte b = (byte)(hashedData[19] & 0xF);
-                int codePoint = (hashedData[b] & 0x7F) << 24 | (hashedData[b + 1] & 0xFF) << 16 | (hashedData[b + 2] & 0xFF) << 8 | (hashedData[b + 3] & 0xFF);
+                var b = (byte)(hashedData[19] & 0xF);
+                var codePoint = (hashedData[b] & 0x7F) << 24 | (hashedData[b + 1] & 0xFF) << 16 | (hashedData[b + 2] & 0xFF) << 8 | (hashedData[b + 3] & 0xFF);
 
-                for (int i = 0; i < 5; ++i)
+                for (var i = 0; i < 5; ++i)
                 {
-                    codeArray[i] = steamGuardCodeTranslations[codePoint % steamGuardCodeTranslations.Length];
-                    codePoint /= steamGuardCodeTranslations.Length;
+                    codeArray[i] = SteamGuardCodeTranslations[codePoint % SteamGuardCodeTranslations.Length];
+                    codePoint /= SteamGuardCodeTranslations.Length;
                 }
             }
             catch (Exception)
@@ -128,21 +127,21 @@ namespace SteamAuth
 
         public Confirmation[] FetchConfirmations()
         {
-            string url = this.GenerateConfirmationURL();
-            string response = SteamWeb.GETRequest(url, this.Session.GetCookies()).Result;
+            var url = this.GenerateConfirmationUrl();
+            var response = SteamWeb.GetRequest(url, this.Session.GetCookies()).Result;
             return FetchConfirmationInternal(response);
         }
 
         public async Task<Confirmation[]> FetchConfirmationsAsync()
         {
-            string url = this.GenerateConfirmationURL();
-            string response = await SteamWeb.GETRequest(url, this.Session.GetCookies());
+            var url = this.GenerateConfirmationUrl();
+            var response = await SteamWeb.GetRequest(url, this.Session.GetCookies());
             return FetchConfirmationInternal(response);
         }
 
         private Confirmation[] FetchConfirmationInternal(string response)
         {
-            var confirmationsResponse = JsonConvert.DeserializeObject<ConfirmationsResponse>(response);
+            var confirmationsResponse = JsonSerializer.Deserialize<ConfirmationsResponse>(response);
 
             if (!confirmationsResponse.Success)
             {
@@ -162,7 +161,7 @@ namespace SteamAuth
         /// </summary>
         /// <param name="conf"></param>
         /// <returns>The Creator field of conf</returns>
-        public long GetConfirmationTradeOfferID(Confirmation conf)
+        public long GetConfirmationTradeOfferId(Confirmation conf)
         {
             if (conf.ConfType != Confirmation.EMobileConfirmationType.Trade)
                 throw new ArgumentException("conf must be a trade confirmation.");
@@ -192,74 +191,74 @@ namespace SteamAuth
 
         private async Task<bool> _sendConfirmationAjax(Confirmation conf, string op)
         {
-            string url = APIEndpoints.COMMUNITY_BASE + "/mobileconf/ajaxop";
-            string queryString = "?op=" + op + "&";
+            var url = ApiEndpoints.CommunityBase + "/mobileconf/ajaxop";
+            var queryString = "?op=" + op + "&";
             // tag is different from op now
-            string tag = op == "allow" ? "accept" : "reject";
+            var tag = op == "allow" ? "accept" : "reject";
             queryString += GenerateConfirmationQueryParams(tag);
-            queryString += "&cid=" + conf.ID + "&ck=" + conf.Key;
+            queryString += "&cid=" + conf.Id + "&ck=" + conf.Key;
             url += queryString;
 
-            string response = await SteamWeb.GETRequest(url, this.Session.GetCookies());
+            var response = await SteamWeb.GetRequest(url, this.Session.GetCookies());
             if (response == null) return false;
 
-            SendConfirmationResponse confResponse = JsonConvert.DeserializeObject<SendConfirmationResponse>(response);
+            var confResponse = JsonSerializer.Deserialize<SendConfirmationResponse>(response);
             return confResponse.Success;
         }
 
         private async Task<bool> _sendMultiConfirmationAjax(Confirmation[] confs, string op)
         {
-            string url = APIEndpoints.COMMUNITY_BASE + "/mobileconf/multiajaxop";
+            var url = ApiEndpoints.CommunityBase + "/mobileconf/multiajaxop";
             // tag is different from op now
-            string tag = op == "allow" ? "accept" : "reject";
-            string query = "op=" + op + "&" + GenerateConfirmationQueryParams(tag);
+            var tag = op == "allow" ? "accept" : "reject";
+            var query = "op=" + op + "&" + GenerateConfirmationQueryParams(tag);
             foreach (var conf in confs)
             {
-                query += "&cid[]=" + conf.ID + "&ck[]=" + conf.Key;
+                query += "&cid[]=" + conf.Id + "&ck[]=" + conf.Key;
             }
 
             string response;
-            using (CookieAwareWebClient wc = new CookieAwareWebClient())
+            using (var wc = new CookieAwareWebClient())
             {
                 wc.Encoding = Encoding.UTF8;
                 wc.CookieContainer = this.Session.GetCookies();
-                wc.Headers[HttpRequestHeader.UserAgent] = SteamWeb.MOBILE_APP_USER_AGENT;
+                wc.Headers[HttpRequestHeader.UserAgent] = SteamWeb.MobileAppUserAgent;
                 wc.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded; charset=UTF-8";
                 response = await wc.UploadStringTaskAsync(new Uri(url), "POST", query);
             }
             if (response == null) return false;
 
-            SendConfirmationResponse confResponse = JsonConvert.DeserializeObject<SendConfirmationResponse>(response);
+            var confResponse = JsonSerializer.Deserialize<SendConfirmationResponse>(response);
             return confResponse.Success;
         }
 
-        public string GenerateConfirmationURL(string tag = "conf")
+        public string GenerateConfirmationUrl(string tag = "conf")
         {
-            string endpoint = APIEndpoints.COMMUNITY_BASE + "/mobileconf/getlist?";
-            string queryString = GenerateConfirmationQueryParams(tag);
+            var endpoint = ApiEndpoints.CommunityBase + "/mobileconf/getlist?";
+            var queryString = GenerateConfirmationQueryParams(tag);
             return endpoint + queryString;
         }
 
         public string GenerateConfirmationQueryParams(string tag)
         {
-            if (String.IsNullOrEmpty(DeviceID))
+            if (IsNullOrEmpty(DeviceId))
                 throw new ArgumentException("Device ID is not present");
 
-            var queryParams = GenerateConfirmationQueryParamsAsNVC(tag);
+            var queryParams = GenerateConfirmationQueryParamsAsNvc(tag);
 
-            return string.Join("&", queryParams.AllKeys.Select(key => $"{key}={queryParams[key]}"));
+            return Join("&", queryParams.AllKeys.Select(key => $"{key}={queryParams[key]}"));
         }
 
-        public NameValueCollection GenerateConfirmationQueryParamsAsNVC(string tag)
+        public NameValueCollection GenerateConfirmationQueryParamsAsNvc(string tag)
         {
-            if (String.IsNullOrEmpty(DeviceID))
+            if (IsNullOrEmpty(DeviceId))
                 throw new ArgumentException("Device ID is not present");
 
-            long time = TimeAligner.GetSteamTime();
+            var time = TimeAligner.GetSteamTime();
 
             var ret = new NameValueCollection();
-            ret.Add("p", this.DeviceID);
-            ret.Add("a", this.Session.SteamID.ToString());
+            ret.Add("p", this.DeviceId);
+            ret.Add("a", this.Session.SteamId.ToString());
             ret.Add("k", _generateConfirmationHashForTime(time, tag));
             ret.Add("t", time.ToString());
             ret.Add("m", "react");
@@ -270,8 +269,8 @@ namespace SteamAuth
 
         private string _generateConfirmationHashForTime(long time, string tag)
         {
-            byte[] decode = Convert.FromBase64String(this.IdentitySecret);
-            int n2 = 8;
+            var decode = Convert.FromBase64String(this.IdentitySecret);
+            var n2 = 8;
             if (tag != null)
             {
                 if (tag.Length > 32)
@@ -283,11 +282,11 @@ namespace SteamAuth
                     n2 = 8 + tag.Length;
                 }
             }
-            byte[] array = new byte[n2];
-            int n3 = 8;
+            var array = new byte[n2];
+            var n3 = 8;
             while (true)
             {
-                int n4 = n3 - 1;
+                var n4 = n3 - 1;
                 if (n3 <= 0)
                 {
                     break;
@@ -303,11 +302,11 @@ namespace SteamAuth
 
             try
             {
-                HMACSHA1 hmacGenerator = new HMACSHA1();
+                var hmacGenerator = new HMACSHA1();
                 hmacGenerator.Key = decode;
-                byte[] hashedData = hmacGenerator.ComputeHash(array);
-                string encodedData = Convert.ToBase64String(hashedData, Base64FormattingOptions.None);
-                string hash = WebUtility.UrlEncode(encodedData);
+                var hashedData = hmacGenerator.ComputeHash(array);
+                var encodedData = Convert.ToBase64String(hashedData, Base64FormattingOptions.None);
+                var hash = WebUtility.UrlEncode(encodedData);
                 return hash;
             }
             catch
@@ -316,42 +315,40 @@ namespace SteamAuth
             }
         }
 
-        public class WGTokenInvalidException : Exception
+        public class WgTokenInvalidException : Exception
         {
         }
 
-        public class WGTokenExpiredException : Exception
+        public class WgTokenExpiredException : Exception
         {
         }
 
         private class RemoveAuthenticatorResponse
         {
-            [JsonProperty("response")]
+            [JsonPropertyName("response")]
             public RemoveAuthenticatorInternalResponse Response { get; set; }
 
             internal class RemoveAuthenticatorInternalResponse
             {
-                [JsonProperty("success")]
+                [JsonPropertyName("success")]
                 public bool Success { get; set; }
 
-                [JsonProperty("revocation_attempts_remaining")]
+                [JsonPropertyName("revocation_attempts_remaining")]
                 public int RevocationAttemptsRemaining { get; set; }
             }
         }
 
         private class SendConfirmationResponse
         {
-            [JsonProperty("success")]
+            [JsonPropertyName("success")]
             public bool Success { get; set; }
         }
 
         private class ConfirmationDetailsResponse
         {
-            [JsonProperty("success")]
-            public bool Success { get; set; }
+            [JsonPropertyName("success")] public bool Success { get; set; }
 
-            [JsonProperty("html")]
-            public string HTML { get; set; }
+            [JsonPropertyName("html")] public string Html { get; set; }
         }
     }
 }
