@@ -223,6 +223,7 @@ namespace SteamAuth
             {
                 wc.Encoding = Encoding.UTF8;
                 wc.CookieContainer = this.Session.GetCookies();
+                wc.Headers["Origin"] = APIEndpoints.COMMUNITY_BASE;
                 wc.Headers[HttpRequestHeader.UserAgent] = SteamWeb.MOBILE_APP_USER_AGENT;
                 wc.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded; charset=UTF-8";
                 response = await wc.UploadStringTaskAsync(new Uri(url), "POST", query);
