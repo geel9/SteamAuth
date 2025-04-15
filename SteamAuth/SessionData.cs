@@ -61,20 +61,50 @@ namespace SteamAuth
 
         private bool IsTokenExpired(string token)
         {
-            var tokenComponents = token.Split('.');
+            // Compare expire time of the token to the current time
+            return DateTimeOffset.UtcNow.ToUnixTimeSeconds() > GetTokenExpirationTime(token);
+        }
+
+        /// <summary>
+        /// If the token is going to expire within the next 24h.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsRefreshTokenAboutToExpire()
+        {
+            return IsRefreshTokenExpired() || IsTokenAboutToExpire(RefreshToken);
+        }
+
+        /// <summary>
+        /// Returns if the token will expire
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        private bool IsTokenAboutToExpire(string token)
+        {
+            // Compare expire time of the token to the current time
+            return DateTimeOffset.UtcNow.ToUnixTimeSeconds() + (24 * 60 * 60) > GetTokenExpirationTime(token);
+        }
+
+        /// <summary>
+        /// Fetches JWT expiration time.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        private long GetTokenExpirationTime(string token)
+        {
+            string[] tokenComponents = token.Split('.');
             // Fix up base64url to normal base64
-            var base64 = tokenComponents[1].Replace('-', '+').Replace('_', '/');
+            string base64 = tokenComponents[1].Replace('-', '+').Replace('_', '/');
 
             if (base64.Length % 4 != 0)
             {
                 base64 += new string('=', 4 - base64.Length % 4);
             }
 
-            var payloadBytes = Convert.FromBase64String(base64);
-            var jwt = JsonConvert.DeserializeObject<SteamAccessToken>(System.Text.Encoding.UTF8.GetString(payloadBytes));
+            byte[] payloadBytes = Convert.FromBase64String(base64);
+            SteamAccessToken jwt = JsonConvert.DeserializeObject<SteamAccessToken>(System.Text.Encoding.UTF8.GetString(payloadBytes));
 
-            // Compare expire time of the token to the current time
-            return DateTimeOffset.UtcNow.ToUnixTimeSeconds() > jwt.exp;
+            return jwt.exp;
         }
 
         public CookieContainer GetCookies()
