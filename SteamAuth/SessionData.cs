@@ -18,7 +18,13 @@ namespace SteamAuth
 
         public string SessionID { get; set; }
 
-        public async Task RefreshAccessToken()
+        /// <summary>
+        /// Refresh your access token, optionally also getting a new refresh token
+        /// </summary>
+        /// <param name="allowRenewal">Allow getting a new refresh token as well. If one is returned, this.RefreshToken will be overwritten. You must save this new token!</param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task RefreshAccessToken(bool allowRenewal = false)
         {
             if (string.IsNullOrEmpty(this.RefreshToken))
                 throw new Exception("Refresh token is empty");
@@ -32,6 +38,7 @@ namespace SteamAuth
                 var postData = new NameValueCollection();
                 postData.Add("refresh_token", this.RefreshToken);
                 postData.Add("steamid", this.SteamID.ToString());
+                postData.Add("renewal_type", allowRenewal ? "1" : "0");
                 responseStr = await SteamWeb.POSTRequest("https://api.steampowered.com/IAuthenticationService/GenerateAccessTokenForApp/v1/", null, postData);
             }
             catch (Exception ex)
@@ -41,6 +48,9 @@ namespace SteamAuth
 
             var response = JsonConvert.DeserializeObject<GenerateAccessTokenForAppResponse>(responseStr);
             this.AccessToken = response.Response.AccessToken;
+
+            if (!string.IsNullOrEmpty(response.Response.RefreshToken))
+                this.RefreshToken = response.Response.RefreshToken;
         }
 
         public bool IsAccessTokenExpired()
@@ -159,6 +169,9 @@ namespace SteamAuth
         {
             [JsonProperty("access_token")]
             public string AccessToken { get; set; }
+
+            [JsonProperty("refresh_token")]
+            public string RefreshToken { get; set; }
         }
     }
 }
