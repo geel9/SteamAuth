@@ -23,7 +23,7 @@ namespace SteamAuth
             return response;
         }
 
-        public static async Task<string> POSTRequest(string url, CookieContainer cookies, NameValueCollection body)
+        public static async Task<string> POSTRequest(string url, CookieContainer cookies, NameValueCollection body, string headerName = null)
         {
             if (body == null)
                 body = new NameValueCollection();
@@ -36,6 +36,11 @@ namespace SteamAuth
                 wc.Headers[HttpRequestHeader.UserAgent] = SteamWeb.MOBILE_APP_USER_AGENT;
                 byte[] result = await wc.UploadValuesTaskAsync(new Uri(url), "POST", body);
                 response = Encoding.UTF8.GetString(result);
+
+                if (!string.IsNullOrEmpty(headerName) && wc.ResponseHeaders != null)
+                {
+                    return wc.ResponseHeaders[headerName] ?? null;
+                }
             }
             return response;
         }
