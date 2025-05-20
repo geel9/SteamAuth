@@ -42,8 +42,15 @@ namespace SteamAuth
         [JsonProperty("status")]
         public int Status { get; set; }
 
+        // Deprecated?
         [JsonProperty("device_id")]
         public string DeviceID { get; set; }
+
+        [JsonProperty("phone_number_hint")]
+        public string PhoneNumberHint { get; set; }
+
+        [JsonProperty("confirm_type")]
+        public int ConfirmType { get; set; }
 
         /// <summary>
         /// Set to true if the authenticator has actually been applied to the account.
@@ -144,7 +151,7 @@ namespace SteamAuth
         {
             var confirmationsResponse = JsonConvert.DeserializeObject<ConfirmationsResponse>(response);
 
-            if (!confirmationsResponse.Success)
+            if (confirmationsResponse == null || !confirmationsResponse.Success)
             {
                 throw new Exception(confirmationsResponse.Message);
             }
