@@ -91,6 +91,17 @@ namespace SteamAuth
         {
             return GenerateSteamGuardCodeForTime(await TimeAligner.GetSteamTimeAsync());
         }
+        
+        public async Task<bool> SignInViaQR(string idOfQR) { 
+            var postBody = new NameValueCollection();
+            postBody.Add("client_id", idOfQR);
+            postBody.Add("steamid", this.Session.SteamID.ToString());
+            postBody.Add("code", GenerateSteamGuardCode());
+            postBody.Add("code_type", "3");
+            var response = await SteamWeb.POSTRequest("https://api.steampowered.com/IAuthenticationService/UpdateAuthSessionWithSteamGuardCode/v1/", null, postBody, "X-eresult");
+            
+            return response == "1";
+        }
 
         public string GenerateSteamGuardCodeForTime(long time)
         {
